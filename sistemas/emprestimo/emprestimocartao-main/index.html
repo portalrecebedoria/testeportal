@@ -1,0 +1,120 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Empréstimo de Cartões</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+    <!-- Firebase Auth compat -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <script src="firebaseConfig.js"></script>
+    <script src="pdfGenerator.js"></script>
+    <script src="index.js"></script>
+</head>
+<body>
+
+<header>
+    <img src="logo.png" alt="Logo" class="logo">
+    <h1>Empréstimo de Cartões</h1>
+
+    <!-- ✅ BOTÃO SEM RESTRIÇÃO: VISÍVEL PARA TODOS -->
+    <button id="uploadMotoristasBtn">
+        📤 Upload Motoristas
+    </button>
+</header>
+
+<main>
+
+    <aside id="estoque">
+        <h2>📦 Estoque</h2>
+        <div id="estoqueConteudo">Carregando...</div>
+    </aside>
+
+    <form id="emprestimoForm">
+
+        <div class="form-group">
+            <label>Matrícula do Motorista:</label>
+            <input type="text" id="matriculaMotorista" required>
+        </div>
+
+        <div class="form-group">
+            <label>Nome do Motorista:</label>
+            <input type="text" id="nomeMotorista" required>
+        </div>
+
+        <div class="form-group">
+            <label>Tipo de Cartão:</label>
+            <select id="tipoCartao" required>
+                <option value="">Selecione</option>
+                <option value="digicon">DIGICON</option>
+                <option value="prodata">PRODATA</option>
+                <option value="meiaViagem">Meia Viagem</option>
+            </select>
+        </div>
+
+        <div id="digiconField" class="form-group">
+            <label>N° Bordo Digicon:</label>
+            <select id="numBordoDigicon">
+                <option value="" disabled selected>Selecione</option>
+            </select>
+        </div>
+
+        <div id="prodataField" class="form-group">
+            <label>N° Bordo Prodata:</label>
+            <select id="numBordoProdata">
+                <option value="" disabled selected>Selecione</option>
+            </select>
+        </div>
+
+        <div id="meiaViagemField" class="form-group">
+            <label>N° Meia Viagem:</label>
+            <select id="numMeiaViagem">
+                <option value="" disabled selected>Selecione</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Motivo:</label>
+            <select id="motivo" required>
+                <option value="">Selecione</option>
+                <option value="Perda">Perda</option>
+                <option value="Danificado">Danificado</option>
+                <option value="Roubo/Furto">Roubo/Furto</option>
+                <option value="Esquecido">Esquecido</option>
+                <option value="Outros">Outros</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Matrícula de quem está emprestando:</label>
+            <input type="text" id="matriculaEmpresto" required readonly>
+        </div>
+
+        <div class="form-group">
+            <label>Data:</label>
+            <input type="text" id="dataRetirada" disabled>
+        </div>
+
+        <button type="submit" id="salvarBtn">Salvar Empréstimo</button>
+
+    </form>
+</main>
+
+<footer class="footer">
+    Developed by Lucas L Custodio
+</footer>
+
+</body>
+</html>
