@@ -9,8 +9,7 @@ import {
   updateDoc,
   doc,
   deleteDoc,
-  serverTimestamp,
-  getDoc
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
@@ -46,7 +45,7 @@ let chartMensal = null;
 let matriculaAtual = null;
 let adminPanelExpanded = false;
 
-// --- LOGIN STATE ---
+// ---------------- LOGIN ----------------
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     window.location.href = "../../login.html";
@@ -70,7 +69,7 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// --- PERFIL ---
+// ---------------- PERFIL ----------------
 async function carregarPerfil(dados) {
   const matriculasRosa = ["8789", "9003", "6414", "5271"];
   nomeEl.textContent = dados.nome;
@@ -106,7 +105,7 @@ async function carregarPerfil(dados) {
   });
 }
 
-// --- AVISOS FUNCIONÁRIO (COM MARCAÇÃO DE VISTO) ---
+// ---------------- AVISOS FUNCIONÁRIO ----------------
 async function carregarAvisos(matricula) {
   const q = query(collection(db, "avisos"), where("matricula", "==", matricula));
   const snap = await getDocs(q);
@@ -124,31 +123,53 @@ async function carregarAvisos(matricula) {
 
   avisosLista.innerHTML = "";
   snap.forEach((d) => {
+    const data = d.data();
     const p = document.createElement("p");
-    p.textContent = d.data().texto;
     p.style.color = "#fff";
+
+    let visto = "";
+    if (data.vistoEm) {
+      const dt = data.vistoEm.toDate();
+      visto = ` — visto em ${dt.toLocaleDateString("pt-BR")} ${dt.toLocaleTimeString("pt-BR")}`;
+    }
+
+    p.textContent = `${data.texto}${visto}`;
     avisosLista.appendChild(p);
   });
 }
 
-// Marcar visto ao abrir pela primeira vez
-btnAvisos.addEventListener("click", async () => {
-  modalAvisos.showModal();
-  btnAvisos.classList.remove("blink", "aviso-vermelho");
+// 🔥 Marca todos os avisos como vistos (apenas a primeira vez)
+async function marcarAvisosComoVistos(matricula) {
+  const q = query(collection(db, "avisos"), where("matricula", "==", matricula));
+  const snap = await getDocs(q);
 
-  const snap = await getDocs(query(collection(db, "avisos"), where("matricula", "==", matriculaAtual)));
+  const agora = new Date();
 
-  snap.forEach(async (docSnap) => {
-    const d = docSnap.data();
-    if (!d.vistoEm) {
+  for (const docSnap of snap.docs) {
+    const data = docSnap.data();
+
+    // 👉 Só grava a primeira visualização
+    if (!data.vistoEm) {
       await updateDoc(doc(db, "avisos", docSnap.id), {
-        vistoEm: serverTimestamp()
+        vistoEm: agora
       });
     }
-  });
+  }
+}
+
+btnAvisos.addEventListener("click", async () => {
+  modalAvisos.showModal();
+
+  // 🔥 Marca como visto ao abrir
+  await marcarAvisosComoVistos(matriculaAtual);
+
+  btnAvisos.classList.remove("blink", "aviso-vermelho");
+
+  // Atualiza lista com timestamps
+  carregarAvisos(matriculaAtual);
 });
 
-// --- GRÁFICO INDIVIDUAL ---
+// ---------------- GRÁFICO ----------------
 async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
   const relatoriosRef = collection(db, "relatorios");
   const agora = new Date();
@@ -228,33 +249,9 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
       options: {
         maintainAspectRatio: false,
         responsive: true,
-        plugins: {
-          legend: { labels: { color: "#fff", font: { size: 14 } } },
-          tooltip: {
-            mode: "index",
-            intersect: false,
-            backgroundColor: "rgba(0,0,0,0.9)",
-            titleColor: "#00f5ff",
-            bodyColor: "#fff",
-            borderColor: "#00f5ff",
-            borderWidth: 1
-          }
-        },
         scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { color: "#888" },
-            grid: { color: "rgba(0,128,128,0.2)", borderDash: [4, 2] }
-          },
-          y1: {
-            position: "right",
-            ticks: { color: "#00f5ff" },
-            grid: { drawOnChartArea: false }
-          },
-          x: {
-            ticks: { color: "#fff" },
-            grid: { color: "rgba(255,255,255,0.05)" }
-          }
+          y: { beginAtZero: true },
+          y1: { position: "right" }
         }
       }
     });
@@ -262,20 +259,19 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
     totalInfoEl.innerHTML = `
       <div class="resumo">
         <span class="abastecimentos">Abastecimentos: ${totalAbastecimentos}</span>
-        <span class="dinheiro">Dinheiro: R$ ${totalDinheiro.toLocaleString(
-          "pt-BR",
-          { minimumFractionDigits: 2 }
-        )}</span>
+        <span class="dinheiro">Dinheiro: R$ ${totalDinheiro.toLocaleString("pt-BR", {
+          minimumFractionDigits: 2
+        })}</span>
       </div>
     `;
   });
 }
 
-// --- ADMIN ---
+// ---------------- ADMIN ----------------
 async function carregarMatriculasAdmin() {
-  const snap = await getDocs(collection(db, "users"));
+  const q = query(collection(db, "users"));
+  const snap = await getDocs(q);
   adminMatriculaSelect.innerHTML = "";
-
   snap.forEach(docSnap => {
     const d = docSnap.data();
     const option = document.createElement("option");
@@ -312,7 +308,7 @@ btnSalvarAviso.addEventListener("click", async () => {
     matricula,
     texto,
     criadoEm: serverTimestamp(),
-    vistoEm: null
+    vistoEm: null // 🔥 novo aviso começa como não visto
   });
 
   adminAvisoInput.value = "";
@@ -322,24 +318,24 @@ btnSalvarAviso.addEventListener("click", async () => {
   alert("Aviso salvo com sucesso!");
 });
 
-// --- ADMIN VER / EDITAR / EXCLUIR AVISOS ---
+// ADMIN lista + vistoEm mostrado
 btnVerAvisosAdmin.addEventListener("click", async () => {
   modalAdminAvisos.showModal();
-
   const snap = await getDocs(collection(db, "avisos"));
   adminAvisosLista.innerHTML = "";
 
   snap.forEach(docSnap => {
     const d = docSnap.data();
-
     const p = document.createElement("p");
     p.style.color = "#fff";
 
-    const vistoTexto = d.vistoEm
-      ? `📘 Visto: ${d.vistoEm.toDate().toLocaleString("pt-BR")}`
-      : "🔴 Não visto";
+    let visto = "";
+    if (d.vistoEm) {
+      const dt = d.vistoEm.toDate();
+      visto = ` — visto em ${dt.toLocaleDateString("pt-BR")} ${dt.toLocaleTimeString("pt-BR")}`;
+    }
 
-    p.innerHTML = `<strong>${d.matricula}:</strong> ${d.texto}<br><small>${vistoTexto}</small><br>`;
+    p.innerHTML = `<strong>${d.matricula}:</strong> ${d.texto}${visto} `;
 
     const btnEditar = document.createElement("button");
     btnEditar.textContent = "Editar";
@@ -364,18 +360,17 @@ btnVerAvisosAdmin.addEventListener("click", async () => {
 
     p.appendChild(btnEditar);
     p.appendChild(btnExcluir);
-
     adminAvisosLista.appendChild(p);
   });
 });
 
-// --- TOGGLE PAINEL ADMIN ---
+// ---------------- Toggle painel admin ----------------
 btnToggleAdmin.addEventListener("click", () => {
   adminPanelExpanded = !adminPanelExpanded;
   adminControls.style.display = adminPanelExpanded ? "flex" : "none";
 });
 
-// --- RESPOSTA À BARRA LATERAL DO PORTAL ---
+// ---------------- Sidebar integração ----------------
 window.addEventListener("message", (event) => {
   if (event.data === "sidebarOpened") {
     document.body.classList.add("sidebar-open");
