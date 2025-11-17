@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -25,7 +24,7 @@
 
         <div class="grid">
 
-            <!-- RESUMO DO RECEBEDOR -->
+            <!-- ✅ RESUMO DO RECEBEDOR (NÃO ALTERADO) -->
             <aside class="card admin-only">
                 <div class="flex-between">
                     <h3>Resumo do Recebedor</h3>
@@ -63,7 +62,7 @@
                 </div>
             </aside>
 
-            <!-- GERAR RELATÓRIO -->
+            <!-- ✅ GERAR RELATÓRIO (NÃO ALTERADO) -->
             <aside class="card">
                 <h3>Gerar Relatório</h3>
 
@@ -91,18 +90,20 @@
 
 <footer class="footer"></footer>
 
-<!-- MODAL PRINCIPAL DOS RELATÓRIOS -->
+<!-- ✅ MODAL PRINCIPAL DOS RELATÓRIOS -->
 <dialog id="modalRelatorios" class="modal">
     <form method="dialog" class="modal-content">
-
-        <div class="modal-header">
-            <button type="submit" class="btn outline btn-fechar-modal-left">Fechar</button>
-            <h3>Relatórios</h3>
+        <!-- Cabeçalho com botão de fechar à esquerda -->
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+            <button id="btnFecharModalRelatorios" type="button" class="btn outline" style="margin-right:8px;">✕</button>
+            <h3 style="margin:0;">Relatórios</h3>
         </div>
 
         <div class="row admin-only">
             <label>Matrícula</label>
-            <select id="filtroMatricula"></select>
+            <select id="filtroMatricula">
+                <option value="">Selecione</option>
+            </select>
         </div>
 
         <div class="row">
@@ -113,23 +114,29 @@
 
         <div id="listaRelatoriosModal" class="lista"></div>
 
+        <!-- Mantive o botão de fechar no rodapé também (opcional) -->
+        <div class="row" style="justify-content:flex-end; margin-top:12px;">
+            <button class="btn" type="submit">Fechar</button>
+        </div>
     </form>
 </dialog>
 
-<!-- MODAL DO RESUMO (INDEPENDENTE) -->
+<!-- ✅ MODAL FLUTUANTE DE RESUMO DO RELATÓRIO -->
 <dialog id="modalResumo" class="modal">
     <div class="modal-content">
-        <h3>Resumo do Relatório</h3>
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+            <!-- botão Fechar do resumo permanece na esquerda do título do resumo -->
+            <button id="btnFecharResumo" class="btn" type="button" style="margin-right:8px;">✕</button>
+            <h3 style="margin:0;">Resumo do Relatório</h3>
+        </div>
 
         <div id="conteudoResumo"></div>
 
-        <div class="row">
-            <button id="btnFecharResumo" class="btn" type="button">Fechar</button>
-        </div>
+        <!-- removi o botão duplicado ao final porque já há o botão no header acima -->
     </div>
 </dialog>
 
-<!-- MODAL DE PÓS-CONFERÊNCIA -->
+<!-- ✅ MODAL DE PÓS-CONFERÊNCIA -->
 <dialog id="posModal" class="modal">
     <form method="dialog" class="modal-content">
         <h3>Pós-Conferência</h3>
@@ -143,5 +150,69 @@
     </form>
 </dialog>
 
+<!-- Pequeno script inline que aplica 3 correções solicitadas
+     - reseta filtro de matrícula ao abrir modalRelatorios
+     - adiciona botão de fechar no topo do modalRelatorios
+     - garante que fechar o resumo não feche permanentemente o modalRelatorios
+-->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const btnAbrir = document.getElementById('btnAbrirRelatorios');
+  const modalRel = document.getElementById('modalRelatorios');
+  const filtroMat = document.getElementById('filtroMatricula');
+  const btnFecharModal = document.getElementById('btnFecharModalRelatorios');
+
+  const modalResumo = document.getElementById('modalResumo');
+  const btnFecharResumo = document.getElementById('btnFecharResumo');
+
+  // Ao abrir Relatórios: garantir que filtro volte para "Selecione"
+  if (btnAbrir) {
+    btnAbrir.addEventListener('click', async (e) => {
+      // se tiver um select de filtro, resetar
+      if (filtroMat) {
+        filtroMat.value = "";
+        // força selecionar 1ª opção (caso haja manipulação posterior)
+        filtroMat.selectedIndex = 0;
+      }
+      // abre modal (app.js também pode chamar carregarRelatoriosModal; aqui só cuida do comportamento)
+      try { modalRel.showModal(); } catch (err) { /* ignore */ }
+    });
+  }
+
+  // Botão de fechar no topo do modalRelatorios
+  if (btnFecharModal) {
+    btnFecharModal.addEventListener('click', () => {
+      if (modalRel) modalRel.close();
+    });
+  }
+
+  // Garantir que ao fechar o resumo o modalRelatorios NÃO seja fechado.
+  // Algumas implementações podem fechar outro dialog por acidente — então reabrimos se necessário.
+  if (btnFecharResumo) {
+    btnFecharResumo.addEventListener('click', () => {
+      const relWasOpen = modalRel && modalRel.open;
+      try { modalResumo.close(); } catch (err) { /* ignore */ }
+      // se o modalRel estava aberto e foi fechado acidentalmente, reabra
+      setTimeout(() => {
+        if (relWasOpen && modalRel && !modalRel.open) {
+          try { modalRel.showModal(); } catch (err) { /* ignore */ }
+        }
+      }, 120);
+    });
+  }
+
+  // Segurança: quando modalRel for aberto por outros scripts, também resetar o filtro
+  // (isso garante comportamento consistente se app.js abrir o modal)
+  const observer = new MutationObserver(() => {
+    if (modalRel && modalRel.open && filtroMat) {
+      filtroMat.value = "";
+      filtroMat.selectedIndex = 0;
+    }
+  });
+  if (modalRel) observer.observe(modalRel, { attributes: true, attributeFilter: ['open'] });
+});
+</script>
+
 </body>
 </html>
+                     
