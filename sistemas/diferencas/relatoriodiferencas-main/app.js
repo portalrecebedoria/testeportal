@@ -214,7 +214,7 @@ function inicializarFiltros(admin, matricula) {
 async function salvarRelatorio(admin) {
 
     if (!admin)
-        return alert("Apenas administradores podem criar relatórios.");
+        return alert("Apenas administradores podem criar relatorios.");
 
     const matricula = document.getElementById("matriculaForm").value;
     const dataCaixa = document.getElementById("dataCaixa").value;
@@ -353,7 +353,7 @@ function ativarEventosLista(admin, matricula) {
     document.querySelectorAll(".btnExcluir").forEach(btn => {
         btn.addEventListener("click", async () => {
 
-            if (!confirm("Excluir relatório?")) return;
+            if (!confirm("Excluir relatorio?")) return;
 
             try {
                 await deleteDoc(doc(db, "relatorios", btn.dataset.id));

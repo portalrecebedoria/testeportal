@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Relatório de Diferenças</title>
+    <title>Relatorio de Diferencas</title>
 
     <link rel="stylesheet" href="styles.css" />
     <script type="module" src="app.js" defer></script>
@@ -15,9 +15,9 @@
 <header class="topbar">
     <div class="brand">
         <img src="assets/logo.png" alt="Logo" class="logo" />
-        <h1>Relatório de Diferenças</h1>
+        <h1>Relatorio de Diferencas</h1>
     </div>
-    <button id="btnAbrirRelatorios" class="btn outline">Relatórios</button>
+    <button id="btnAbrirRelatorios" class="btn outline">Relatorios</button>
 </header>
 
 <main class="container">
@@ -34,12 +34,12 @@
 
                 <div id="resumoWrap" class="collapsed">
                     <div class="row">
-                        <label>Matrícula</label>
+                        <label>Matricula</label>
                         <select id="selectMatriculas"></select>
                     </div>
 
                     <div class="row">
-                        <label>Mês</label>
+                        <label>MÃªs</label>
                         <input id="mesResumo" type="month" />
                         <button id="btnCarregarResumo" class="btn">Carregar</button>
                     </div>
@@ -47,7 +47,7 @@
                     <div id="resumoDados" class="stats">
                         <div><span>Total Folha</span> <strong id="resumoTotalFolha">R$ 0,00</strong></div>
                         <div><span>Saldo</span> <strong id="resumoSaldo">R$ 0,00</strong></div>
-                        <div><span>Situação</span> <strong id="resumoSituacao">-</strong></div>
+                        <div><span>SituaÃ§Ã£o</span> <strong id="resumoSituacao">-</strong></div>
 
                         <div class="filter-row">
                             <label>Ver apenas:</label>
@@ -63,24 +63,24 @@
                 </div>
             </aside>
 
-            <!-- GERAR RELATÓRIO -->
+            <!-- GERAR RELATÃ“RIO -->
             <aside class="card">
-                <h3>Gerar Relatório</h3>
+                <h3>Gerar Relatorio</h3>
 
                 <div id="gerarRelatorioForm" class="admin-only" hidden>
-                    <div class="row"><label>Matrícula</label><select id="matriculaForm"></select></div>
+                    <div class="row"><label>MatrÃ­cula</label><select id="matriculaForm"></select></div>
                     <div class="row"><label>Data</label><input id="dataCaixa" type="date" /></div>
                     <div class="row"><label>Folha</label><input id="valorFolha" type="number" step="0.01" /></div>
                     <div class="row"><label>Dinheiro</label><input id="valorDinheiro" type="number" step="0.01" /></div>
                     <div class="row"><label>Sobra/Falta</label><input id="sobraFalta" type="text" disabled /></div>
                     <div class="row"><label>Abastecimento</label><input id="abastecimento" type="number" /></div>
-                    <div class="row"><label>Observação</label><textarea id="observacao"></textarea></div>
+                    <div class="row"><label>Observacao</label><textarea id="observacao"></textarea></div>
 
                     <button id="btnSalvarRelatorio" class="btn primary">Salvar</button>
                 </div>
 
                 <div class="user-only" id="infoUserOnly" hidden>
-                    <p>Os relatórios são criados pelos administradores.</p>
+                    <p>Os relatÃ³rios sÃ£o criados pelos administradores.</p>
                 </div>
             </aside>
 
@@ -91,18 +91,18 @@
 
 <footer class="footer"></footer>
 
-<!-- MODAL PRINCIPAL DE RELATÓRIOS -->
+<!-- MODAL PRINCIPAL DE RELATÃ“RIOS -->
 <dialog id="modalRelatorios" class="modal">
     <div class="modal-content">
 
-        <!-- ?? Botão corrigido: ID agora é o mesmo do app.js -->
+        <!-- ðŸ”¥ BotÃ£o corrigido: ID agora Ã© o mesmo do app.js -->
         <div style="display:flex; align-items:center; justify-content:flex-start; gap:10px;">
             <button id="btnFecharRelatorios" class="btn danger" type="button">Fechar</button>
-            <h3 style="margin:0;">Relatórios</h3>
+            <h3 style="margin:0;">RelatÃ³rios</h3>
         </div>
 
         <div class="row admin-only">
-            <label>Matrícula</label>
+            <label>MatrÃ­cula</label>
             <select id="filtroMatricula"></select>
         </div>
 
@@ -120,7 +120,7 @@
 <!-- MODAL RESUMO -->
 <dialog id="modalResumo" class="modal">
     <div class="modal-content">
-        <h3>Resumo do Relatório</h3>
+        <h3>Resumo do RelatÃ³rio</h3>
 
         <div id="conteudoResumo"></div>
 
@@ -130,10 +130,10 @@
     </div>
 </dialog>
 
-<!-- PÓS-CONFERÊNCIA -->
+<!-- PÃ“S-CONFERÃŠNCIA -->
 <dialog id="posModal" class="modal">
     <form method="dialog" class="modal-content">
-        <h3>Pós-Conferência</h3>
+        <h3>Pos-Conferencia</h3>
 
         <textarea id="posTexto" rows="6"></textarea>
 

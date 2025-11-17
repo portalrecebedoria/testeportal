@@ -37,7 +37,7 @@ const btnVerAvisosAdmin = document.getElementById("btnVerAvisosAdmin");
 const modalAdminAvisos = document.getElementById("modalAdminAvisos");
 const adminAvisosLista = document.getElementById("adminAvisosLista");
 
-// ✅ Nome vira botão do painel admin
+// Nome vira botão do painel admin
 const btnToggleAdmin = nomeEl;
 
 let usuarioAtual = null;
@@ -45,7 +45,7 @@ let chartMensal = null;
 let matriculaAtual = null;
 let adminPanelExpanded = false;
 
-// --- LOGIN STATE ---
+// LOGIN STATE
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     window.location.href = "../../login.html";
@@ -69,7 +69,7 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// --- PERFIL ---
+// PERFIL
 async function carregarPerfil(dados) {
   const matriculasRosa = ["8789", "9003", "6414", "5271"];
   nomeEl.textContent = dados.nome;
@@ -105,7 +105,7 @@ async function carregarPerfil(dados) {
   });
 }
 
-// --- AVISOS FUNCIONÁRIO ---
+// AVISOS FUNCIONÁRIO
 async function carregarAvisos(matricula) {
   const q = query(collection(db, "avisos"), where("matricula", "==", matricula));
   const snap = await getDocs(q);
@@ -125,17 +125,38 @@ async function carregarAvisos(matricula) {
   snap.forEach((d) => {
     const p = document.createElement("p");
     p.textContent = d.data().texto;
-    p.style.color = "#fff"; // ✅ texto branco
+    p.style.color = "#fff";
     avisosLista.appendChild(p);
   });
 }
 
-btnAvisos.addEventListener("click", () => {
+// REGISTRAR VIZUALIZAÇÃO DO AVISO
+async function registrarPrimeiraVisualizacao(matricula) {
+  const q = query(collection(db, "avisos"), where("matricula", "==", matricula));
+  const snap = await getDocs(q);
+
+  snap.forEach(async (docSnap) => {
+    const dados = docSnap.data();
+
+    // já visto → não atualiza
+    if (dados.vistoEm) return;
+
+    // registra primeira visualização
+    await updateDoc(doc(db, "avisos", docSnap.id), {
+      vistoEm: serverTimestamp()
+    });
+  });
+}
+
+btnAvisos.addEventListener("click", async () => {
   modalAvisos.showModal();
   btnAvisos.classList.remove("blink", "aviso-vermelho");
+
+  // REGISTRA A PRIMEIRA VEZ QUE ABRIU
+  registrarPrimeiraVisualizacao(matriculaAtual);
 });
 
-// --- GRÁFICO INDIVIDUAL ---
+// GRÁFICO INDIVIDUAL
 async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
   const relatoriosRef = collection(db, "relatorios");
   const agora = new Date();
@@ -165,7 +186,6 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
 
       if (!dias[dia]) dias[dia] = { abastecimentos: 0, valorFolha: 0 };
 
-      // 🔹 Soma do campo "abastecimento" em vez de contar documentos
       dias[dia].abastecimentos += Number(r.abastecimento || 0);
       dias[dia].valorFolha += Number(r.valorFolha || 0);
 
@@ -261,7 +281,7 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
   });
 }
 
-// --- ADMIN ---
+// ADMIN
 async function carregarMatriculasAdmin() {
   const q = query(collection(db, "users"));
   const snap = await getDocs(q);
@@ -287,7 +307,6 @@ btnSalvarHorario.addEventListener("click", async () => {
     const userDoc = snap.docs[0];
     await updateDoc(userDoc.ref, { horarioTrabalho: horario });
 
-    // ✅ Atualiza instantaneamente
     if (matriculaAtual === matricula) horarioEl.textContent = horario;
 
     alert("Horário salvo com sucesso!");
@@ -307,15 +326,15 @@ btnSalvarAviso.addEventListener("click", async () => {
 
   adminAvisoInput.value = "";
 
-  // ✅ Atualiza avisos imediatamente
   if (matriculaAtual === matricula) carregarAvisos(matriculaAtual);
 
   alert("Aviso salvo com sucesso!");
 });
 
-// --- ADMIN MODAL COM EDIT/DELETE ---
+// ADMIN MODAL COM EDIT/DELETE
 btnVerAvisosAdmin.addEventListener("click", async () => {
-  modalAdminAvisos.showModal();
+  modalAdminAvisos.showDialog();
+
   const snap = await getDocs(collection(db, "avisos"));
   adminAvisosLista.innerHTML = "";
 
@@ -324,7 +343,16 @@ btnVerAvisosAdmin.addEventListener("click", async () => {
     const p = document.createElement("p");
     p.style.color = "#fff";
 
-    p.innerHTML = `<strong>${d.matricula}:</strong> ${d.texto} `;
+    let vistoTexto = "Não visualizado";
+    if (d.vistoEm?.toDate) {
+      const dt = d.vistoEm.toDate();
+      vistoTexto = dt.toLocaleString("pt-BR");
+    }
+
+    p.innerHTML = `
+      <strong>${d.matricula}:</strong> ${d.texto}<br>
+      <small>Primeira visualização: <strong>${vistoTexto}</strong></small><br>
+    `;
 
     const btnEditar = document.createElement("button");
     btnEditar.textContent = "Editar";
@@ -353,13 +381,13 @@ btnVerAvisosAdmin.addEventListener("click", async () => {
   });
 });
 
-// --- TOGGLE PAINEL ADMIN ---
+// TOGGLE PAINEL ADMIN
 btnToggleAdmin.addEventListener("click", () => {
   adminPanelExpanded = !adminPanelExpanded;
   adminControls.style.display = adminPanelExpanded ? "flex" : "none";
 });
 
-// --- RESPOSTA À BARRA LATERAL DO PORTAL ---
+// RESPOSTA À BARRA LATERAL DO PORTAL
 window.addEventListener("message", (event) => {
   if (event.data === "sidebarOpened") {
     document.body.classList.add("sidebar-open");
