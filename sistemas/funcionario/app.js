@@ -9,7 +9,8 @@ import {
   updateDoc,
   doc,
   deleteDoc,
-  serverTimestamp
+  serverTimestamp,
+  getDoc
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
@@ -45,7 +46,7 @@ let chartMensal = null;
 let matriculaAtual = null;
 let adminPanelExpanded = false;
 
-// LOGIN STATE
+// --- LOGIN STATE ---
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     window.location.href = "../../login.html";
@@ -69,7 +70,7 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// PERFIL
+// --- PERFIL ---
 async function carregarPerfil(dados) {
   const matriculasRosa = ["8789", "9003", "6414", "5271"];
   nomeEl.textContent = dados.nome;
@@ -105,7 +106,7 @@ async function carregarPerfil(dados) {
   });
 }
 
-// AVISOS FUNCIONÁRIO
+// --- AVISOS FUNCIONÁRIO (COM MARCAÇÃO DE VISTO) ---
 async function carregarAvisos(matricula) {
   const q = query(collection(db, "avisos"), where("matricula", "==", matricula));
   const snap = await getDocs(q);
@@ -130,33 +131,24 @@ async function carregarAvisos(matricula) {
   });
 }
 
-// REGISTRAR VIZUALIZAÇÃO DO AVISO
-async function registrarPrimeiraVisualizacao(matricula) {
-  const q = query(collection(db, "avisos"), where("matricula", "==", matricula));
-  const snap = await getDocs(q);
-
-  snap.forEach(async (docSnap) => {
-    const dados = docSnap.data();
-
-    // já visto → não atualiza
-    if (dados.vistoEm) return;
-
-    // registra primeira visualização
-    await updateDoc(doc(db, "avisos", docSnap.id), {
-      vistoEm: serverTimestamp()
-    });
-  });
-}
-
+// Marcar visto ao abrir pela primeira vez
 btnAvisos.addEventListener("click", async () => {
   modalAvisos.showModal();
   btnAvisos.classList.remove("blink", "aviso-vermelho");
 
-  // REGISTRA A PRIMEIRA VEZ QUE ABRIU
-  registrarPrimeiraVisualizacao(matriculaAtual);
+  const snap = await getDocs(query(collection(db, "avisos"), where("matricula", "==", matriculaAtual)));
+
+  snap.forEach(async (docSnap) => {
+    const d = docSnap.data();
+    if (!d.vistoEm) {
+      await updateDoc(doc(db, "avisos", docSnap.id), {
+        vistoEm: serverTimestamp()
+      });
+    }
+  });
 });
 
-// GRÁFICO INDIVIDUAL
+// --- GRÁFICO INDIVIDUAL ---
 async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
   const relatoriosRef = collection(db, "relatorios");
   const agora = new Date();
@@ -237,9 +229,7 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
         maintainAspectRatio: false,
         responsive: true,
         plugins: {
-          legend: {
-            labels: { color: "#fff", font: { size: 14 } }
-          },
+          legend: { labels: { color: "#fff", font: { size: 14 } } },
           tooltip: {
             mode: "index",
             intersect: false,
@@ -281,11 +271,11 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
   });
 }
 
-// ADMIN
+// --- ADMIN ---
 async function carregarMatriculasAdmin() {
-  const q = query(collection(db, "users"));
-  const snap = await getDocs(q);
+  const snap = await getDocs(collection(db, "users"));
   adminMatriculaSelect.innerHTML = "";
+
   snap.forEach(docSnap => {
     const d = docSnap.data();
     const option = document.createElement("option");
@@ -321,7 +311,8 @@ btnSalvarAviso.addEventListener("click", async () => {
   await addDoc(collection(db, "avisos"), {
     matricula,
     texto,
-    criadoEm: serverTimestamp()
+    criadoEm: serverTimestamp(),
+    vistoEm: null
   });
 
   adminAvisoInput.value = "";
@@ -331,28 +322,24 @@ btnSalvarAviso.addEventListener("click", async () => {
   alert("Aviso salvo com sucesso!");
 });
 
-// ADMIN MODAL COM EDIT/DELETE
+// --- ADMIN VER / EDITAR / EXCLUIR AVISOS ---
 btnVerAvisosAdmin.addEventListener("click", async () => {
-  modalAdminAvisos.showDialog();
+  modalAdminAvisos.showModal();
 
   const snap = await getDocs(collection(db, "avisos"));
   adminAvisosLista.innerHTML = "";
 
   snap.forEach(docSnap => {
     const d = docSnap.data();
+
     const p = document.createElement("p");
     p.style.color = "#fff";
 
-    let vistoTexto = "Não visualizado";
-    if (d.vistoEm?.toDate) {
-      const dt = d.vistoEm.toDate();
-      vistoTexto = dt.toLocaleString("pt-BR");
-    }
+    const vistoTexto = d.vistoEm
+      ? `📘 Visto: ${d.vistoEm.toDate().toLocaleString("pt-BR")}`
+      : "🔴 Não visto";
 
-    p.innerHTML = `
-      <strong>${d.matricula}:</strong> ${d.texto}<br>
-      <small>Primeira visualização: <strong>${vistoTexto}</strong></small><br>
-    `;
+    p.innerHTML = `<strong>${d.matricula}:</strong> ${d.texto}<br><small>${vistoTexto}</small><br>`;
 
     const btnEditar = document.createElement("button");
     btnEditar.textContent = "Editar";
@@ -377,17 +364,18 @@ btnVerAvisosAdmin.addEventListener("click", async () => {
 
     p.appendChild(btnEditar);
     p.appendChild(btnExcluir);
+
     adminAvisosLista.appendChild(p);
   });
 });
 
-// TOGGLE PAINEL ADMIN
+// --- TOGGLE PAINEL ADMIN ---
 btnToggleAdmin.addEventListener("click", () => {
   adminPanelExpanded = !adminPanelExpanded;
   adminControls.style.display = adminPanelExpanded ? "flex" : "none";
 });
 
-// RESPOSTA À BARRA LATERAL DO PORTAL
+// --- RESPOSTA À BARRA LATERAL DO PORTAL ---
 window.addEventListener("message", (event) => {
   if (event.data === "sidebarOpened") {
     document.body.classList.add("sidebar-open");
