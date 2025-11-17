@@ -334,3 +334,10 @@ details summary {
     border-radius: 4px;
 }
 
+.modal-header {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 10px;
+}

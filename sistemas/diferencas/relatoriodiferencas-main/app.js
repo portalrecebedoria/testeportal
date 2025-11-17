@@ -23,6 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
     configurarAutoSobra();
 
     onAuthStateChanged(auth, async (user) => {
+
         if (!user) {
             window.location.href = "/login.html";
             return;
@@ -43,15 +44,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
         configurarInterface(IS_ADMIN);
         await popularSelects(IS_ADMIN);
+
         inicializarEventos(IS_ADMIN, MATRICULA);
         inicializarFiltros(IS_ADMIN, MATRICULA);
+
         await carregarRelatoriosModal(IS_ADMIN, MATRICULA);
         carregarResumoMensal(IS_ADMIN);
     });
 });
 
 /* ============================================================
-   ATUALIZADOR AUTOMÁTICO SOBRA/FALTA
+   AUTO Sobra/Falta
 ============================================================ */
 function configurarAutoSobra() {
     const f = document.getElementById("valorFolha");
@@ -71,7 +74,7 @@ function configurarAutoSobra() {
 }
 
 /* ============================================================
-   CONTROLE ADMIN/USER
+   ADMIN / USER
 ============================================================ */
 function configurarInterface(admin) {
     document.querySelectorAll(".admin-only").forEach(el => el.hidden = !admin);
@@ -79,9 +82,10 @@ function configurarInterface(admin) {
 }
 
 /* ============================================================
-   POPULAR SELECTS DE MATRÍCULA
+   POPULAR SELECTS
 ============================================================ */
 async function popularSelects(admin) {
+
     const selForm = document.getElementById("matriculaForm");
     const selResumo = document.getElementById("selectMatriculas");
     const selFiltro = document.getElementById("filtroMatricula");
@@ -113,8 +117,7 @@ async function popularSelects(admin) {
         });
     });
 
-    // 🔥 Correção solicitada:
-    // Filtro de matrícula SEMPRE volta para "Selecione" para admins
+    // 🔥 Correção: Admin sempre começa com SELECIONE
     if (admin && selFiltro) selFiltro.value = "";
 }
 
@@ -132,12 +135,18 @@ function inicializarEventos(admin, matricula) {
             document.getElementById("modalRelatorios").showModal();
         });
 
-    // ❗ RESUMO AGORA NÃO FECHA O MODAL DE RELATÓRIOS
-    // Apenas fecha ele mesmo
+    // 🛑 RESUMO NÃO FECHA MAIS O MODAL DE RELATÓRIOS
     document.getElementById("btnFecharResumo")
-        ?.addEventListener("click", () =>
-            document.getElementById("modalResumo").close()
-        );
+        ?.addEventListener("click", (e) => {
+            e.stopPropagation();
+            document.getElementById("modalResumo").close();
+        });
+
+    // 🔥 Novo botão de fechar na parte superior do modal de relatórios
+    document.getElementById("btnFecharRelatorios")
+        ?.addEventListener("click", () => {
+            document.getElementById("modalRelatorios").close();
+        });
 
     document.getElementById("btnCarregarResumo")
         ?.addEventListener("click", () => carregarResumoMensal(admin));
@@ -193,19 +202,17 @@ async function salvarRelatorio(admin) {
     const dataReal = new Date(ano, mes - 1, dia);
 
     try {
+
         await addDoc(collection(db, "relatorios"), {
             createdBy: auth.currentUser.uid,
             criadoEm: serverTimestamp(),
             dataCaixa: dataReal,
             matricula,
-
             valorFolha: folha,
             valorDinheiro: dinheiro,
             sobraFalta: dinheiro - folha,
-
             abastecimento,
             observacao,
-
             posTexto: "",
             posEditado: false
         });
@@ -229,7 +236,7 @@ async function salvarRelatorio(admin) {
 }
 
 /* ============================================================
-   CARREGAR RELATÓRIOS MODAL
+   CARREGAR RELATÓRIOS
 ============================================================ */
 async function carregarRelatoriosModal(admin, filtroMatricula = null, filtroData = null) {
 
@@ -257,14 +264,19 @@ async function carregarRelatoriosModal(admin, filtroMatricula = null, filtroData
         const r = docSnap.data();
         const id = docSnap.id;
 
-        const dataObj = r.dataCaixa.toDate ? r.dataCaixa.toDate() : new Date(r.dataCaixa);
+        const dataObj = r.dataCaixa.toDate
+            ? r.dataCaixa.toDate()
+            : new Date(r.dataCaixa);
+
         const dataStr = `${dataObj.getFullYear()}-${(dataObj.getMonth() + 1)
             .toString().padStart(2, "0")}-${dataObj.getDate().toString().padStart(2, "0")}`;
 
         if (filtroData && filtroData !== dataStr) return;
         if (admin && filtroMatricula && r.matricula !== filtroMatricula) return;
 
-        const posAlerta = r.posEditado ? `<span class="alerta-pos">⚠️ Pós Conferência</span>` : "";
+        const posAlerta = r.posEditado
+            ? `<span class="alerta-pos">⚠️ Pós Conferência</span>`
+            : "";
 
         const item = document.createElement("div");
         item.className = "relatorio-item";
@@ -272,7 +284,6 @@ async function carregarRelatoriosModal(admin, filtroMatricula = null, filtroData
         item.innerHTML = `
             <div class="item-header">
                 <strong>${dataObj.toLocaleDateString()}</strong> — Matrícula: ${r.matricula} ${posAlerta}
-
                 <div class="header-actions">
                     <button class="btn outline btnVer" data-id="${id}">Ver Detalhes</button>
                 </div>
@@ -282,8 +293,8 @@ async function carregarRelatoriosModal(admin, filtroMatricula = null, filtroData
                 <button class="btn outline btnPos" data-id="${id}">Pós-Conferência</button>
 
                 ${admin ? `
-                    <button class="btn primary btnEdit" data-id="${id}">Editar</button>
-                    <button class="btn danger btnExcluir" data-id="${id}">Excluir</button>
+                <button class="btn primary btnEdit" data-id="${id}">Editar</button>
+                <button class="btn danger btnExcluir" data-id="${id}">Excluir</button>
                 ` : ""}
             </div>
         `;
@@ -295,7 +306,7 @@ async function carregarRelatoriosModal(admin, filtroMatricula = null, filtroData
 }
 
 /* ============================================================
-   ATIVAR EVENTOS DA LISTA
+   EVENTOS — LISTA
 ============================================================ */
 function ativarEventosLista(admin, matricula) {
 
@@ -328,7 +339,7 @@ function ativarEventosLista(admin, matricula) {
 }
 
 /* ============================================================
-   MODAL FLUTUANTE — VER DETALHES
+   MODAL FLUTUANTE — DETALHES
 ============================================================ */
 async function abrirResumo(id) {
 
@@ -337,6 +348,7 @@ async function abrirResumo(id) {
 
     const snap = await getDoc(doc(db, "relatorios", id));
     if (!snap.exists()) return;
+
     const r = snap.data();
 
     const classe = r.sobraFalta >= 0 ? "positivo" : "negativo";
@@ -420,7 +432,7 @@ async function editarRelatorio(id) {
 }
 
 /* ============================================================
-   RESUMO MENSAL DO ADMIN
+   RESUMO MENSAL (ADMIN)
 ============================================================ */
 async function carregarResumoMensal(admin) {
 

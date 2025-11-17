@@ -25,7 +25,7 @@
 
         <div class="grid">
 
-            <!-- ✅ RESUMO DO RECEBEDOR (NÃO ALTERADO) -->
+            <!-- RESUMO DO RECEBEDOR -->
             <aside class="card admin-only">
                 <div class="flex-between">
                     <h3>Resumo do Recebedor</h3>
@@ -63,7 +63,7 @@
                 </div>
             </aside>
 
-            <!-- ✅ GERAR RELATÓRIO (NÃO ALTERADO) -->
+            <!-- GERAR RELATÓRIO -->
             <aside class="card">
                 <h3>Gerar Relatório</h3>
 
@@ -91,10 +91,14 @@
 
 <footer class="footer"></footer>
 
-<!-- ✅ MODAL PRINCIPAL DOS RELATÓRIOS -->
+<!-- MODAL PRINCIPAL DOS RELATÓRIOS -->
 <dialog id="modalRelatorios" class="modal">
     <form method="dialog" class="modal-content">
-        <h3>Relatórios</h3>
+
+        <div class="modal-header">
+            <button type="submit" class="btn outline btn-fechar-modal-left">Fechar</button>
+            <h3>Relatórios</h3>
+        </div>
 
         <div class="row admin-only">
             <label>Matrícula</label>
@@ -109,13 +113,10 @@
 
         <div id="listaRelatoriosModal" class="lista"></div>
 
-        <div class="row">
-            <button class="btn" type="submit">Fechar</button>
-        </div>
     </form>
 </dialog>
 
-<!-- ✅ MODAL FLUTUANTE DE RESUMO DO RELATÓRIO -->
+<!-- MODAL DO RESUMO (INDEPENDENTE) -->
 <dialog id="modalResumo" class="modal">
     <div class="modal-content">
         <h3>Resumo do Relatório</h3>
@@ -128,7 +129,7 @@
     </div>
 </dialog>
 
-<!-- ✅ MODAL DE PÓS-CONFERÊNCIA -->
+<!-- MODAL DE PÓS-CONFERÊNCIA -->
 <dialog id="posModal" class="modal">
     <form method="dialog" class="modal-content">
         <h3>Pós-Conferência</h3>
