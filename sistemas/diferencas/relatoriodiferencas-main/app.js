@@ -48,7 +48,13 @@ document.addEventListener("DOMContentLoaded", () => {
         inicializarEventos(IS_ADMIN, MATRICULA);
         inicializarFiltros(IS_ADMIN, MATRICULA);
 
-        await carregarRelatoriosModal(IS_ADMIN, MATRICULA);
+        // Admin → carrega todos os relatórios SEM filtro
+        // Usuário → carrega apenas os dele
+        await carregarRelatoriosModal(
+            IS_ADMIN,
+            IS_ADMIN ? null : MATRICULA
+        );
+
         carregarResumoMensal(IS_ADMIN);
     });
 });
@@ -117,7 +123,7 @@ async function popularSelects(admin) {
         });
     });
 
-    // 🔥 Correção: Admin sempre começa com SELECIONE
+    // Admin sempre inicia com SELECIONE
     if (admin && selFiltro) selFiltro.value = "";
 }
 
@@ -131,18 +137,30 @@ function inicializarEventos(admin, matricula) {
 
     document.getElementById("btnAbrirRelatorios")
         ?.addEventListener("click", async () => {
-            await carregarRelatoriosModal(admin, matricula);
+            await carregarRelatoriosModal(admin, admin ? null : matricula);
             document.getElementById("modalRelatorios").showModal();
         });
 
-    // 🛑 RESUMO NÃO FECHA MAIS O MODAL DE RELATÓRIOS
+    // 🔥 NÃO DEIXA O RESUMO FECHAR O MODAL DE RELATÓRIOS
+    const resumoModal = document.getElementById("modalResumo");
+    const resumoContent = document.getElementById("conteudoResumo");
+
+    // Bloqueia clique no conteúdo
+    resumoContent.addEventListener("click", (e) => e.stopPropagation());
+
+    // Fecha SOMENTE o resumo se clicar fora
+    resumoModal.addEventListener("click", (e) => {
+        if (e.target === resumoModal) resumoModal.close();
+    });
+
+    // Botão fechar do resumo
     document.getElementById("btnFecharResumo")
         ?.addEventListener("click", (e) => {
             e.stopPropagation();
-            document.getElementById("modalResumo").close();
+            resumoModal.close();
         });
 
-    // 🔥 Novo botão de fechar na parte superior do modal de relatórios
+    // Botão fechar do relatório (Topo)
     document.getElementById("btnFecharRelatorios")
         ?.addEventListener("click", () => {
             document.getElementById("modalRelatorios").close();
@@ -168,13 +186,19 @@ function inicializarFiltros(admin, matricula) {
             const filtroData = document.getElementById("filtroDataGlobal").value || null;
             await carregarRelatoriosModal(admin, filtroMat.value || null, filtroData);
         });
+
+        // Admin sempre inicia com selecione
+        if (admin) filtroMat.value = "";
     }
 
     const filtroData = document.getElementById("filtroDataGlobal");
 
     if (filtroData) {
         filtroData.addEventListener("change", async () => {
-            const filtroMatricula = filtroMat ? filtroMat.value || null : matricula;
+            const filtroMatricula = admin
+                ? (filtroMat.value || null)
+                : matricula;
+
             await carregarRelatoriosModal(admin, filtroMatricula, filtroData.value || null);
         });
     }
@@ -227,7 +251,7 @@ async function salvarRelatorio(admin) {
         document.getElementById("abastecimento").value = "";
         document.getElementById("observacao").value = "";
 
-        await carregarRelatoriosModal(admin, matricula);
+        await carregarRelatoriosModal(admin, null);
 
     } catch (e) {
         console.error(e);
