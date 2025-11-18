@@ -299,35 +299,78 @@ if (changePassBtn) {
   changePassBtn.addEventListener('click', async () => {
     const user = auth.currentUser;
     if (!user) {
-      alert("Usuário não autenticado!");
+      showAlert("Usuário não autenticado!", "error");
       return;
     }
 
-    // Solicita nova senha ao usuário
-    const newPassword = prompt("Digite a nova senha (mínimo 6 caracteres):");
-    if (!newPassword || newPassword.length < 6) {
-      alert("Senha inválida! Deve ter no mínimo 6 caracteres.");
-      return;
-    }
+    // ============================
+    //  Modal bonito para alterar senha
+    // ============================
+    const modalHTML = `
+      <div id="modalTrocarSenha" class="modal-overlay">
+        <div class="modal-box">
+          <h2>Alterar Senha</h2>
 
-    try {
-      await updatePassword(user, newPassword);
-      alert("Senha alterada com sucesso!");
-    } catch (error) {
-      console.error("Erro ao alterar senha:", error);
+          <label>Nova senha</label>
+          <input type="password" id="novaSenhaInput" placeholder="Mínimo 6 caracteres">
 
-      // Caso seja necessário reautenticar (comum em sessões antigas)
-      if (error.code === 'auth/requires-recent-login') {
-        alert("Por segurança, você precisa entrar novamente para alterar a senha.");
-        try {
-          await signOut(auth);
-          window.location.href = 'login.html';
-        } catch (signOutErr) {
-          console.error("Erro ao deslogar para reautenticação:", signOutErr);
-        }
-      } else {
-        alert("Falha ao alterar senha: " + error.message);
+          <label>Confirmar senha</label>
+          <input type="password" id="confirmarSenhaInput" placeholder="Repita a senha">
+
+          <div class="modal-actions">
+            <button id="cancelarTrocaSenha" class="btn-cancel">Cancelar</button>
+            <button id="confirmarTrocaSenha" class="btn-confirm">Salvar</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Injeta o modal no DOM
+    document.body.insertAdjacentHTML("beforeend", modalHTML);
+
+    const modal = document.getElementById("modalTrocarSenha");
+    const btnCancelar = document.getElementById("cancelarTrocaSenha");
+    const btnConfirmar = document.getElementById("confirmarTrocaSenha");
+    const inputNova = document.getElementById("novaSenhaInput");
+    const inputConfirmar = document.getElementById("confirmarSenhaInput");
+
+    // Fechar modal
+    btnCancelar.onclick = () => modal.remove();
+
+    // Confirmar alteração
+    btnConfirmar.onclick = async () => {
+      const newPassword = inputNova.value.trim();
+      const confirmPassword = inputConfirmar.value.trim();
+
+      if (!newPassword || newPassword.length < 6) {
+        showAlert("Senha inválida! Deve ter no mínimo 6 caracteres.", "error");
+        return;
       }
-    }
+
+      if (confirmPassword !== newPassword) {
+        showAlert("As senhas não conferem. Operação cancelada.", "error");
+        return;
+      }
+
+      try {
+        await updatePassword(user, newPassword);
+        showAlert("Senha alterada com sucesso!", "success");
+        modal.remove();
+      } catch (error) {
+        console.error("Erro ao alterar senha:", error);
+
+        if (error.code === 'auth/requires-recent-login') {
+          showAlert("Por segurança, faça login novamente para alterar a senha.", "error");
+          try {
+            await signOut(auth);
+            window.location.href = 'login.html';
+          } catch (signOutErr) {
+            console.error("Erro ao deslogar:", signOutErr);
+          }
+        } else {
+          showAlert("Falha ao alterar senha: " + error.message, "error");
+        }
+      }
+    };
   });
 }

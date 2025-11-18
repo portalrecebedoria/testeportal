@@ -117,9 +117,22 @@ async function carregarAvisos(matricula) {
     return;
   }
 
+  // 🔥 Verifica se existe aviso não visto
+  let temNaoVistos = false;
+  snap.forEach(d => {
+    if (!d.data().vistoEm) temNaoVistos = true;
+  });
+
   btnAvisos.textContent = `🔔 ${snap.size} aviso(s)`;
-  btnAvisos.classList.add("blink", "aviso-vermelho");
-  btnAvisos.classList.remove("btn-cinza");
+
+  // 🔥 Só pisca se houver aviso não visto
+  if (temNaoVistos) {
+    btnAvisos.classList.add("blink", "aviso-vermelho");
+    btnAvisos.classList.remove("btn-cinza");
+  } else {
+    btnAvisos.classList.remove("blink", "aviso-vermelho");
+    btnAvisos.classList.add("btn-cinza");
+  }
 
   avisosLista.innerHTML = "";
   snap.forEach((d) => {
@@ -163,10 +176,8 @@ btnAvisos.addEventListener("click", async () => {
   // 🔥 Marca como visto ao abrir
   await marcarAvisosComoVistos(matriculaAtual);
 
-  btnAvisos.classList.remove("blink", "aviso-vermelho");
-
-  // Atualiza lista com timestamps
-  carregarAvisos(matriculaAtual);
+  // 🔥 Recarrega a lógica e para o piscar imediatamente
+  await carregarAvisos(matriculaAtual);
 });
 
 // ---------------- GRÁFICO ----------------

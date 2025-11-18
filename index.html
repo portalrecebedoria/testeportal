@@ -4,18 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Portal Recebedoria</title>
+
   <!-- Favicon -->
   <link rel="icon" type="image/x-icon" href="assets/icon-32.ico">
   <link rel="stylesheet" href="style.css">
+
   <script type="module" src="firebaseConfig.js"></script>
   <script type="module" src="script.js"></script>
   <script type="module" src="avisos.js"></script>
 </head>
 <body>
+
   <div class="app">
+
     <div id="sidebar" class="sidebar">
       <div class="toggle">☰</div>
       <div class="sidebar-badge" id="sidebarBadge">MATRICULA</div>
+
       <ul>
         <li data-target="home">🏠 <span class="label">Home</span></li>
         <li data-target="abastecimento">💵 <span class="label">Abastecimento</span></li>
@@ -23,6 +28,7 @@
         <li data-target="relatorios">📊 <span class="label">Relatórios</span></li>
         <li data-target="diferencas">⚖️ <span class="label">Diferenças</span></li>
       </ul>
+
       <div class="sidebar-footer">
         <button id="changePassBtn">Alterar Senha</button>
         <button id="logoutBtn">Sair</button>
@@ -30,11 +36,16 @@
     </div>
 
     <div class="main-content">
+
+      <!-- ⭐ ALERTA GLOBAL (BONITO) -->
+      <div id="alertBox" class="alert" style="display:none;"></div>
+
       <div class="topbar"></div>
 
       <div id="avisosSection" class="avisos">
         <div style="text-align:center;margin-bottom:8px;">
-          <img src="assets/logo.png" alt="Movebuss" style="max-height:88px;filter:drop-shadow(0 0 6px rgba(192,192,192,0.25));">
+          <img src="assets/logo.png" alt="Movebuss" 
+               style="max-height:88px;filter:drop-shadow(0 0 6px rgba(192,192,192,0.25));">
         </div>
 
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
@@ -65,7 +76,9 @@
       <footer style="text-align:center; padding:12px 0; font-size:0.85rem; color:#888;">
         Developed by Lucas L Custodio - Portal Recebedoria v1
       </footer>
+
     </div>
   </div>
+
 </body>
 </html>

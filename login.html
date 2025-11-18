@@ -8,14 +8,18 @@
   <link rel="stylesheet" href="login.css" />
 </head>
 <body>
+
+  <!-- ?? Área visual de alertas -->
+  <div id="alertBox" class="alert-box"></div>
+
   <div class="login-container">
     <img src="assets/logo.png" alt="Logo" class="logo">
     <h2 id="formTitle">Login</h2>
 
     <!-- Login -->
     <div id="loginForm">
-      <input type="text" id="loginMatricula" placeholder="ðŸ†” Matricula" required />
-      <input type="password" id="loginSenha" placeholder="ðŸ” Senha" required />
+      <input type="text" id="loginMatricula" placeholder="?? Matricula" required />
+      <input type="password" id="loginSenha" placeholder="?? Senha" required />
       <button id="btnLogin">Entrar</button>
       <div class="toggle-link" id="showRegister">Criar uma conta</div>
     </div>
@@ -45,8 +49,7 @@
     } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
     import {
       doc,
-      setDoc,
-      getDoc
+      setDoc
     } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
     const loginForm = document.getElementById("loginForm");
@@ -55,7 +58,6 @@
     const showLogin = document.getElementById("showLogin");
     const formTitle = document.getElementById("formTitle");
 
-    // Inicializa visibilidade
     registerForm.style.display = "none";
 
     showRegister.addEventListener("click", () => {
@@ -71,19 +73,35 @@
     });
 
     // =======================================================
+    // ?? Função de alerta bonito
+    // =======================================================
+    function showAlert(message, type = "error") {
+      const alertBox = document.getElementById("alertBox");
+      alertBox.textContent = message;
+
+      alertBox.className = `alert-box ${type}`;
+      alertBox.style.opacity = "1";
+
+      setTimeout(() => {
+        alertBox.style.opacity = "0";
+      }, 3500);
+    }
+
+    // =======================================================
     // ?? LOGIN
     // =======================================================
     document.getElementById("btnLogin").addEventListener("click", async () => {
       const matricula = document.getElementById("loginMatricula").value.trim();
       const senha = document.getElementById("loginSenha").value.trim();
 
-      if (!matricula || !senha) return alert("Preencha todos os campos.");
+      if (!matricula || !senha)
+        return showAlert("Preencha todos os campos.", "error");
 
       try {
         await signInWithEmailAndPassword(auth, `${matricula}@movebuss.local`, senha);
         window.location.href = "index.html";
       } catch (e) {
-        alert("Erro ao fazer login: " + e.message);
+        showAlert("Senha incorreta ou usuário inválido.", "error");
       }
     });
 
@@ -98,19 +116,16 @@
       const confirmaSenha = document.getElementById("regConfirmaSenha").value.trim();
 
       if (!nome || !matricula || !senha || !confirmaSenha || !dataAdmissao)
-        return alert("Preencha todos os campos.");
+        return showAlert("Preencha todos os campos.", "error");
 
       if (senha !== confirmaSenha)
-        return alert("As senhas nao conferem.");
+        return showAlert("As senhas não conferem.", "error");
 
       try {
-        // Cria o usuario no Auth
         const cred = await createUserWithEmailAndPassword(auth, `${matricula}@movebuss.local`, senha);
 
-        // Define o displayName (nome)
         await updateProfile(cred.user, { displayName: nome });
 
-        // Salvo na colecao USERS (apenas ela)
         await setDoc(doc(db, "users", cred.user.uid), {
           uid: cred.user.uid,
           nome,
@@ -121,14 +136,17 @@
           admin: false
         });
 
-        alert("Usuario registrado com sucesso!");
+        showAlert("Usuário registrado com sucesso!", "success");
+
         registerForm.style.display = "none";
         loginForm.style.display = "block";
         formTitle.textContent = "Login";
+
       } catch (e) {
-        alert("Erro ao registrar: " + e.message);
+        showAlert("Erro ao registrar: " + e.message, "error");
       }
     });
   </script>
+
 </body>
 </html>

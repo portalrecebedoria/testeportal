@@ -112,3 +112,43 @@ footer {
 #registerForm {
   display: none;
 }
+
+/* 🔔 ALERTAS BONITOS (SUAVE, NEON) */
+#alertBox {
+  position: fixed;
+  top: 20px;
+  width: 300px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: 600;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.6s ease, transform 0.4s ease;
+  z-index: 9999;
+  backdrop-filter: blur(8px);
+}
+
+/* Erro (vermelho neon suave) */
+#alertBox.error {
+  background: rgba(255, 60, 60, 0.25);
+  border: 1px solid rgba(255, 60, 60, 0.6);
+  color: #ff6b6b;
+  box-shadow: 0 0 12px rgba(255, 70, 70, 0.5);
+}
+
+/* Sucesso (verde neon igual ao restante do site) */
+#alertBox.success {
+  background: rgba(0, 255, 120, 0.22);
+  border: 1px solid rgba(0, 255, 120, 0.6);
+  color: #00ff88;
+  box-shadow: 0 0 12px rgba(0, 255, 120, 0.45);
+}
+
+/* Quando ativo, sobe levemente */
+#alertBox.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(5px);
+}
+

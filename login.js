@@ -16,6 +16,9 @@ import {
   getDoc
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
+// ============================================================
+// 🔥 CONFIG FIREBASE
+// ============================================================
 const firebaseConfig = {
   apiKey: "AIzaSyBWmq02P8pGbl2NmppEAIKtF9KtQ7AzTFQ",
   authDomain: "unificado-441cd.firebaseapp.com",
@@ -31,13 +34,31 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // ============================================================
+// ⭐ ALERTA BONITO (COMPATÍVEL COM SEU CSS NEON)
+// ============================================================
+function showAlert(message, type = "error") {
+  const alertBox = document.getElementById("alertBox");
+  if (!alertBox) return alert(message);
+
+  alertBox.innerHTML = message;
+  alertBox.className = `${type} show`; // ativa animação e cor
+  alertBox.style.display = "block";
+
+  setTimeout(() => {
+    alertBox.classList.remove("show");
+    setTimeout(() => (alertBox.style.display = "none"), 200);
+  }, 3500);
+}
+
+// ============================================================
 // 🔐 LOGIN
 // ============================================================
 document.getElementById("loginBtn").addEventListener("click", async () => {
   const matricula = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
 
-  if (!matricula) return alert("Digite sua matrícula.");
+  if (!matricula)
+    return showAlert("Digite sua matrícula.", "error");
 
   const email = matricula.includes("@")
     ? matricula
@@ -49,7 +70,7 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
 
     const userDoc = await getDoc(doc(db, "users", user.uid));
     if (!userDoc.exists()) {
-      alert("Usuário não encontrado no banco de dados.");
+      showAlert("Usuário não encontrado no banco de dados.", "error");
       return;
     }
 
@@ -58,17 +79,19 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
 
     window.location.href = "index.html";
   } catch (error) {
-    alert("Erro ao fazer login: " + error.message);
+    showAlert("Senha incorreta ou usuário inválido.", "error");
   }
 });
 
-// ✅ ENTER DISPARA O LOGIN
+// ============================================================
+// ⌨ ENTER DISPARA LOGIN
+// ============================================================
 document.addEventListener("keydown", (event) => {
   const loginFormVisible = document.getElementById("loginForm").style.display !== "none";
 
   if (event.key === "Enter" && loginFormVisible) {
     event.preventDefault();
-    document.getElementById("btnLogin").click();
+    document.getElementById("loginBtn").click();
   }
 });
 
@@ -94,24 +117,21 @@ document.getElementById("createAccountBtn").addEventListener("click", async () =
   const confirmar = document.getElementById("confirmPassword").value;
 
   if (!nome || !matricula || !senha || !confirmar || !dataAdmissao)
-    return alert("Preencha todos os campos.");
+    return showAlert("Preencha todos os campos.", "error");
 
   if (senha !== confirmar)
-    return alert("As senhas não conferem.");
+    return showAlert("As senhas não conferem.", "error");
 
   const email = matricula.includes("@")
     ? matricula
     : `${matricula}@movebuss.local`;
 
   try {
-    // Criar no Auth
     const userCredential = await createUserWithEmailAndPassword(auth, email, senha);
     const user = userCredential.user;
 
-    // Atualiza nome no Auth
     await updateProfile(user, { displayName: nome });
 
-    // Salvar na coleção users
     await setDoc(doc(db, "users", user.uid), {
       uid: user.uid,
       nome,
@@ -122,9 +142,10 @@ document.getElementById("createAccountBtn").addEventListener("click", async () =
       admin: false
     });
 
-    alert("Conta criada com sucesso!");
+    showAlert("Conta criada com sucesso!", "success");
     document.getElementById("createAccountModal").classList.add("hidden");
+
   } catch (error) {
-    alert("Erro ao criar conta: " + error.message);
+    showAlert("Erro ao criar conta: " + error.message, "error");
   }
 });
