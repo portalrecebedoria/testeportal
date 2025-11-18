@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ï»¿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -9,7 +9,7 @@
 </head>
 <body>
 
-  <!-- ?? Área visual de alertas -->
+  <!-- ðŸ”” Ãrea visual de alertas -->
   <div id="alertBox" class="alert-box"></div>
 
   <div class="login-container">
@@ -18,8 +18,8 @@
 
     <!-- Login -->
     <div id="loginForm">
-      <input type="text" id="loginMatricula" placeholder="?? Matricula" required />
-      <input type="password" id="loginSenha" placeholder="?? Senha" required />
+      <input type="text" id="loginMatricula" placeholder="ðŸ†”Matricula" required />
+      <input type="password" id="loginSenha" placeholder="ðŸ”Senha" required />
       <button id="btnLogin">Entrar</button>
       <div class="toggle-link" id="showRegister">Criar uma conta</div>
     </div>
@@ -73,7 +73,7 @@
     });
 
     // =======================================================
-    // ?? Função de alerta bonito
+    // ðŸ”” FunÃ§Ã£o de alerta bonito
     // =======================================================
     function showAlert(message, type = "error") {
       const alertBox = document.getElementById("alertBox");
@@ -88,7 +88,19 @@
     }
 
     // =======================================================
-    // ?? LOGIN
+    // âŒ¨ ENTER faz login (ADICIONADO)
+    // =======================================================
+    document.addEventListener("keydown", (event) => {
+      const loginVisible = loginForm.style.display !== "none";
+
+      if (event.key === "Enter" && loginVisible) {
+        event.preventDefault();
+        document.getElementById("btnLogin").click();
+      }
+    });
+
+    // =======================================================
+    // ðŸ” LOGIN
     // =======================================================
     document.getElementById("btnLogin").addEventListener("click", async () => {
       const matricula = document.getElementById("loginMatricula").value.trim();
@@ -101,12 +113,12 @@
         await signInWithEmailAndPassword(auth, `${matricula}@movebuss.local`, senha);
         window.location.href = "index.html";
       } catch (e) {
-        showAlert("Senha incorreta ou usuário inválido.", "error");
+        showAlert("Senha incorreta ou usuario invalido.", "error");
       }
     });
 
     // =======================================================
-    // ?? REGISTRO
+    // ðŸ“ REGISTRO
     // =======================================================
     document.getElementById("btnRegistrar").addEventListener("click", async () => {
       const nome = document.getElementById("regNome").value.trim();
@@ -119,7 +131,7 @@
         return showAlert("Preencha todos os campos.", "error");
 
       if (senha !== confirmaSenha)
-        return showAlert("As senhas não conferem.", "error");
+        return showAlert("As senhas nao conferem.", "error");
 
       try {
         const cred = await createUserWithEmailAndPassword(auth, `${matricula}@movebuss.local`, senha);
@@ -136,7 +148,7 @@
           admin: false
         });
 
-        showAlert("Usuário registrado com sucesso!", "success");
+        showAlert("Usuario registrado com sucesso!", "success");
 
         registerForm.style.display = "none";
         loginForm.style.display = "block";

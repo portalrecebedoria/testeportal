@@ -34,14 +34,14 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // ============================================================
-// ⭐ ALERTA BONITO (COMPATÍVEL COM SEU CSS NEON)
+// ⭐ ALERTA BONITO
 // ============================================================
 function showAlert(message, type = "error") {
   const alertBox = document.getElementById("alertBox");
   if (!alertBox) return alert(message);
 
   alertBox.innerHTML = message;
-  alertBox.className = `${type} show`; // ativa animação e cor
+  alertBox.className = `${type} show`;
   alertBox.style.display = "block";
 
   setTimeout(() => {
@@ -84,10 +84,14 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
 });
 
 // ============================================================
-// ⌨ ENTER DISPARA LOGIN
+// ⌨ ENTER DISPARA LOGIN  (MANTENDO SUA LÓGICA)
 // ============================================================
 document.addEventListener("keydown", (event) => {
-  const loginFormVisible = document.getElementById("loginForm").style.display !== "none";
+  const form = document.getElementById("loginForm");
+  if (!form) return;
+
+  // offsetParent verifica se o elemento está realmente visível
+  const loginFormVisible = form.offsetParent !== null;
 
   if (event.key === "Enter" && loginFormVisible) {
     event.preventDefault();
@@ -143,6 +147,7 @@ document.getElementById("createAccountBtn").addEventListener("click", async () =
     });
 
     showAlert("Conta criada com sucesso!", "success");
+
     document.getElementById("createAccountModal").classList.add("hidden");
 
   } catch (error) {
