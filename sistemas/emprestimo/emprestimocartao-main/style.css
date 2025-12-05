@@ -1,0 +1,268 @@
+﻿/* ===== Reset básico ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ===== Corpo ===== */
+body {
+    background-color: #121212;
+    color: #E0E0E0;
+    min-height: 100vh;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* ===== Cabeçalho ===== */
+header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
+    max-width: 1200px;
+    padding: 20px;
+    background-color: #2A2A2A;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    margin-bottom: 25px;
+}
+
+header img.logo {
+    height: 70px;
+}
+
+header h1 {
+    flex-grow: 1;
+    font-size: 2rem;
+    color: #00ff7f;
+    text-align: center;
+    background-color: #222;
+    padding: 10px 20px;
+    border-radius: 10px;
+}
+
+header button {
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    background-color: #00ff7f;
+    color: #1E1E1E;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+header button:hover {
+    filter: brightness(1.1);
+}
+
+/* ===== Formulário ===== */
+form {
+    background-color: #2A2A2A;
+    padding: 25px 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    width: 100%;
+    max-width: 650px;
+    margin-bottom: 25px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 6px;
+    font-weight: bold;
+    color: #00ff7f;
+}
+
+.form-group input,
+.form-group select {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #00B070;
+    background-color: #1E1E1E;
+    color: #E0E0E0;
+    font-size: 1rem;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #00D080;
+    box-shadow: 0 0 5px rgba(0,176,112,0.7);
+}
+
+/* ===== Botão salvar ===== */
+button#salvarBtn {
+    padding: 12px;
+    width: 100%;
+    border: none;
+    border-radius: 10px;
+    background-color: #00ff7f;
+    color: #1E1E1E;
+    font-weight: bold;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button#salvarBtn::before {
+    content: "💾 ";
+}
+
+button#salvarBtn:hover {
+    filter: brightness(1.2) scale(1.02);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+}
+
+/* Campos dinâmicos */
+#digiconField,
+#prodataField,
+#meiaViagemField {
+    display: none;
+}
+
+/* ===== Layout principal ===== */
+main {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    max-width: 1200px;
+    align-items: flex-start;
+}
+
+/* ===== Estoque ===== */
+#estoque {
+    width: 260px;
+    background: #1e1e1e;
+    padding: 15px;
+    border-radius: 10px;
+    color: #e0e0e0;
+    height: fit-content;
+}
+
+#estoque h2 {
+    color: #00ff7f;
+}
+
+#estoqueConteudo {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.cardEstoque {
+    background: linear-gradient(145deg, #2a2a2a, #232323);
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
+}
+
+.cardEstoque:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.8);
+    filter: brightness(1.05);
+}
+
+/* Bordos com cores */
+.cardEstoque:nth-child(1) h3 { color: #FFD700; }
+.cardEstoque:nth-child(2) h3 { color: #00FF7F; }
+.cardEstoque:nth-child(3) h3 { color: #87CEFA; }
+
+/* ===== Relatório ===== */
+.exportBtn {
+    margin-bottom: 12px;
+    padding: 10px 20px;
+    background: #0984e3;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+table {
+    flex: 1;
+    border-collapse: collapse;
+    background: #1f1f1f;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 20px;
+    width: 100%;
+    table-layout: auto;
+}
+
+th, td {
+    padding: 6px 12px;
+    border-bottom: 1px solid #333;
+    font-size: 0.95rem;
+    color: #e0e0e0;
+}
+
+th {
+    background-color: #00ff7f;
+    color: #111;
+}
+
+tr:hover {
+    background-color: #333;
+}
+
+td.matricula {
+    font-weight: bold;
+    text-align: center;
+}
+
+/* ===== Responsivo ===== */
+@media (max-width: 900px) {
+    main {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    #estoque {
+        width: 100%;
+    }
+
+    header h1 {
+        font-size: 1.5rem;
+    }
+}
+
+/* ===== Rodapé ===== */
+.footer {
+    width: 100%;
+    text-align: center;
+    padding: 10px 0;
+    color: #888;
+    font-size: 0.9rem;
+    margin-top: 20px;
+}
+
+/* ===== Upload motoristas ===== */
+#uploadMotoristasBtn {
+    display: inline-block !important;
+    opacity: 1 !important;
+    pointer-events: all !important;
+    padding: 10px 20px;
+    background: #00aaff;
+    color: white;
+    border-radius: 6px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#uploadMotoristasBtn:hover {
+    background: #0088dd;
+}

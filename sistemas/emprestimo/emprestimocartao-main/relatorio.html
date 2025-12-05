@@ -1,0 +1,581 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relatório de Empréstimos</title>
+<link rel="stylesheet" href="style.css">
+
+<!-- Favicon -->
+<link rel="icon" href="favicon.ico" type="image/x-icon">
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+
+<!-- Firebase SDKs (compat) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+<!-- SheetJS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.20.9/xlsx.full.min.js"></script>
+
+<style>
+/* --- mantive seu estilo original e adicionei classes novas --- */
+body {
+    background-color: #121212;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #e0e0e0;
+    margin: 0;
+    padding: 20px;
+}
+header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+header img.logo { height: 50px; }
+header h1 { flex-grow:1; font-size: 1.5rem; color: #00ff7f; }
+header button {
+    padding:5px 10px; border-radius:5px; border:none;
+    cursor:pointer; background:#00ff7f; color:#111;
+}
+main { display: flex; gap: 20px; align-items:flex-start; }
+#estoque {
+    width: 260px; background: #1e1e1e;
+    padding: 15px; border-radius: 10px; color: #e0e0e0;
+    height: fit-content;
+}
+#estoque h2 { color: #00ff7f; font-size: 1.1rem; margin-bottom: 10px; }
+.cardEstoque {
+    background: #2a2a2a; border-radius: 8px;
+    padding: 10px; margin-bottom: 10px;
+}
+.cardEstoque h3 { margin: 0; font-size: 1rem; color: #00b894; }
+.cardEstoque p { margin: 3px 0; font-size: 0.9rem; }
+
+.controls-bar {
+  display:flex;
+  gap:12px;
+  align-items:center;
+  margin-bottom:12px;
+}
+
+/* filtro mes + tipos */
+#monthSelect {
+  padding:8px 10px;
+  border-radius:8px;
+  background:#222;
+  color:#fff;
+  border:1px solid rgba(255,255,255,0.06);
+  font-weight:600;
+}
+.filterTipoBtn {
+  padding:6px 10px;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,0.06);
+  background:#222;
+  color:#fff;
+  cursor:pointer;
+  font-weight:700;
+}
+#btnTodosTipos {
+  background:#00ff7f;
+  color:#111;
+  font-weight:800;
+  border: none;
+}
+
+.legend {
+  margin-left:auto;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  font-size:0.9rem;
+}
+.legend .item { display:flex; gap:8px; align-items:center; }
+
+.table-wrap { flex:1; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #1f1f1f;
+    border-radius: 8px;
+    overflow: hidden;
+}
+th, td {
+    padding: 6px 8px;
+    text-align: left;
+    border-bottom: 1px solid #333;
+    font-size: 0.95rem;
+    color: #e0e0e0;
+    vertical-align: middle;
+}
+th { background-color: #00ff7f; color: #111; }
+tr:hover { background-color: #333; }
+.statusBtn {
+    padding:5px 18px; border:none; border-radius:5px;
+    cursor:pointer; color:#111; font-weight: bold;
+}
+.exportBtn {
+    margin-bottom:10px; padding:8px 15px;
+    background:#0984e3; color:#fff; border:none; border-radius:5px; cursor:pointer;
+}
+
+/* matrícula cell with badges container */
+td.matricula {
+  font-weight: bold;
+  text-align: center;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  padding-top:10px;
+  padding-bottom:10px;
+}
+
+/* badge small */
+.badge-type {
+  padding:4px 8px;
+  border-radius:999px;
+  font-size:0.78rem;
+  font-weight:700;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.45);
+}
+
+/* color thresholds (if you want to override) */
+.badge-dig { color:#111; }
+.badge-pro { color:#111; }
+.badge-meia { color:#111; }
+
+/* legend swatches */
+.legend-swatch {
+  width:16px; height:12px; border-radius:4px; display:inline-block;
+}
+
+/* footer */
+.footer { margin-top:18px; color:#888; text-align:center; }
+
+/* responsive tweaks */
+@media(max-width:900px){
+  main { flex-direction:column; }
+  #estoque { width:100%; }
+}
+</style>
+</head>
+<body>
+
+<header>
+    <img src="logo.png" alt="Logo" class="logo">
+    <h1>Relatório de Empréstimos</h1>
+    <button onclick="window.location.href='index.html'">🏠 Voltar</button>
+</header>
+
+<main>
+    <aside id="estoque">
+        <h2>📦 Estoque</h2>
+        <div id="estoqueConteudo">Carregando...</div>
+    </aside>
+
+    <div class="table-wrap">
+        <!-- controles dinâmicos serão inseridos pelo script -->
+        <div style="display:flex; justify-content:flex-end; margin-bottom:8px;">
+          <button class="exportBtn" id="exportExcelBtn">📥 Exportar Excel</button>
+        </div>
+
+        <table id="relatorioTable">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Matrícula</th>
+                    <th>Tipo Cartão</th>
+                    <th>N° Bordo Digicon</th>
+                    <th>N° Bordo Prodata</th>
+                    <th>N° Meia Viagem</th>
+                    <th>Motivo</th>
+                    <th>Matrícula Empréstimo</th>
+                    <th>Data Retirada</th>
+                    <th>Prazo Devolução</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="relatorioBody"></tbody>
+        </table>
+    </div>
+</main>
+
+<script src="firebaseConfig.js"></script>
+<script>
+/* ---------- atualizarEstoque (mantive lógica original) ---------- */
+async function atualizarEstoque() {
+  const estoqueDiv = document.getElementById("estoqueConteudo");
+  estoqueDiv.innerHTML = "Atualizando...";
+
+  const total = { digicon: 10, prodata: 10, meiaViagem: 10 };
+  const emprestados = { digicon: [], prodata: [], meiaViagem: [] };
+
+  const snapshot = await db.collection("emprestimos")
+    .where("status", "==", "em aberto")
+    .get();
+
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    const tipo = (data.tipoCartao || '').toString().toLowerCase();
+    if (tipo === "digicon" && data.numBordoDigicon) emprestados.digicon.push(Number(data.numBordoDigicon));
+    if (tipo === "prodata" && data.numBordoProdata) emprestados.prodata.push(Number(data.numBordoProdata));
+    if (data.numMeiaViagem) emprestados.meiaViagem.push(Number(data.numMeiaViagem));
+  });
+
+  function gerarLista(tipo) {
+    const chave = tipo;
+    const todos = Array.from({ length: total[chave] }, (_, i) => i + 1);
+    const disponiveis = todos.filter(n => !emprestados[chave].includes(n));
+    const titulo = chave === 'digicon' ? 'Bordo Digicon' : chave === 'prodata' ? 'Bordo Prodata' : 'Meia Viagem';
+    return `
+      <div class="cardEstoque">
+        <h3>${titulo}</h3>
+        <p><b>Qtd. Disponível:</b> ${disponiveis.length}</p>
+        <p><b>Qtd. Emprestado:</b> ${emprestados[chave].length}</p>
+        <p><b>N° Disponíveis:</b> ${disponiveis.join(', ') || '-'}</p>
+        <p><b>N° Emprestados:</b> ${emprestados[chave].join(', ') || '-'}</p>
+      </div>`;
+  }
+
+  estoqueDiv.innerHTML =
+    gerarLista("digicon") +
+    gerarLista("prodata") +
+    gerarLista("meiaViagem");
+}
+
+/* ---------- Helpers para mês ---------- */
+function getMonthId(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  return `${y}-${m}`; // YYYY-MM
+}
+
+function monthIdToRange(monthId) {
+  const [y, m] = monthId.split('-').map(Number);
+  const first = new Date(y, m - 1, 1, 0, 0, 0);
+  const last = new Date(y, m, 0, 23, 59, 59, 999);
+  return { start: first, end: last };
+}
+
+function formatMonthLabel(monthId) {
+  const [y, m] = monthId.split('-').map(Number);
+  const d = new Date(y, m - 1, 1);
+  return d.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+}
+
+/* ---------- Cria controles dinâmicos (mês, tipo, legenda) ---------- */
+function criarControles() {
+  const container = document.createElement('div');
+  container.className = 'controls-bar';
+
+  // Month select
+  const monthSelect = document.createElement('select');
+  monthSelect.id = 'monthSelect';
+  monthSelect.title = 'Selecionar mês';
+  // Preencher últimos 12 meses (inclui atual)
+  const current = new Date();
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(current.getFullYear(), current.getMonth() - i, 1);
+    const id = getMonthId(d);
+    const opt = document.createElement('option');
+    opt.value = id;
+    opt.textContent = formatMonthLabel(id);
+    monthSelect.appendChild(opt);
+  }
+
+  // Toggle buttons for types
+  const toggles = document.createElement('div');
+  toggles.style.display = 'flex';
+  toggles.style.gap = '8px';
+  toggles.style.alignItems = 'center';
+
+  ['digicon', 'prodata', 'meia'].forEach(key => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'filterTipoBtn';
+    btn.dataset.tipo = key;
+    btn.textContent = key === 'digicon' ? 'Digicon' : key === 'prodata' ? 'Prodata' : 'Meia';
+    btn.style.padding = '6px 10px';
+    btn.style.borderRadius = '8px';
+    btn.style.border = '1px solid rgba(255,255,255,0.06)';
+    btn.style.background = '#222';
+    btn.style.color = '#fff';
+    btn.style.cursor = 'pointer';
+    btn.dataset.active = 'true'; // default active
+    toggles.appendChild(btn);
+  });
+
+  // "Todos" toggle
+  const btnTodos = document.createElement('button');
+  btnTodos.type = 'button';
+  btnTodos.id = 'btnTodosTipos';
+  btnTodos.textContent = 'Todos';
+  btnTodos.style.padding = '6px 10px';
+  btnTodos.style.borderRadius = '8px';
+  btnTodos.style.border = '1px solid rgba(255,255,255,0.06)';
+  btnTodos.style.background = '#00ff7f';
+  btnTodos.style.color = '#111';
+  btnTodos.style.cursor = 'pointer';
+  toggles.insertBefore(btnTodos, toggles.firstChild);
+
+  // Legend / Índice cores
+  const legend = document.createElement('div');
+  legend.className = 'legend';
+
+  const thresholds = [
+    { label: '1', color: '#bcd9a8' },
+    { label: '2', color: '#f9e79f' },
+    { label: '3', color: '#f5b041' },
+    { label: '4+', color: '#e74c3c' }
+  ];
+  thresholds.forEach(t => {
+    const item = document.createElement('div');
+    item.className = 'item';
+    const sw = document.createElement('span');
+    sw.className = 'legend-swatch';
+    sw.style.background = t.color;
+    const lbl = document.createElement('span');
+    lbl.textContent = t.label;
+    item.appendChild(sw);
+    item.appendChild(lbl);
+    legend.appendChild(item);
+  });
+
+  container.appendChild(monthSelect);
+  container.appendChild(toggles);
+  container.appendChild(legend);
+
+  // Inserir antes da tabela
+  const tableWrap = document.querySelector('.table-wrap');
+  tableWrap.insertBefore(container, tableWrap.firstChild);
+
+  // Event handlers
+  monthSelect.addEventListener('change', () => {
+    carregarRelatorio();
+  });
+
+  toggles.querySelectorAll('.filterTipoBtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.dataset.active = btn.dataset.active === 'true' ? 'false' : 'true';
+      btn.style.opacity = btn.dataset.active === 'true' ? '1' : '0.45';
+      const all = Array.from(toggles.querySelectorAll('.filterTipoBtn'));
+      if (all.every(b => b.dataset.active === 'false')) {
+        all.forEach(b => { b.dataset.active = 'true'; b.style.opacity = '1'; });
+      }
+      carregarRelatorio();
+    });
+  });
+
+  btnTodos.addEventListener('click', () => {
+    const all = Array.from(toggles.querySelectorAll('.filterTipoBtn'));
+    const anyInactive = all.some(b => b.dataset.active === 'false');
+    if (anyInactive) {
+      all.forEach(b => { b.dataset.active = 'true'; b.style.opacity = '1'; });
+    } else {
+      // keep at least one active -> here we toggle all to off then immediately reset to on to avoid blank
+      all.forEach(b => { b.dataset.active = 'false'; b.style.opacity = '0.45'; });
+      all.forEach(b => { b.dataset.active = 'true'; b.style.opacity = '1'; });
+    }
+    carregarRelatorio();
+  });
+
+  // Set default month to current
+  monthSelect.value = getMonthId(new Date());
+}
+
+/* ---------- Lê dados e monta tabela filtrada pelo mês e tipo ---------- */
+async function carregarRelatorio() {
+  const tbody = document.getElementById('relatorioBody');
+  tbody.innerHTML = '';
+  const table = document.getElementById('relatorioTable');
+
+  const monthSelect = document.getElementById('monthSelect');
+  const selectedMonth = monthSelect ? monthSelect.value : getMonthId(new Date());
+  const { start, end } = monthIdToRange(selectedMonth);
+
+  const activeTipos = Array.from(document.querySelectorAll('.filterTipoBtn'))
+    .filter(b => b.dataset.active === 'true')
+    .map(b => b.dataset.tipo); // ['digicon','prodata','meia']
+
+  const counts = {}; // counts[matricula] = { digicon, prodata, meia }
+  const rows = [];
+
+  try {
+    const snapshot = await db.collection('emprestimos').orderBy('timestamp','desc').get();
+
+    snapshot.forEach(docSnap => {
+      const data = docSnap.data();
+      let docDate = null;
+      if (data.timestamp && data.timestamp.toDate) {
+        docDate = data.timestamp.toDate();
+      } else if (data.dataRetirada) {
+        const parts = data.dataRetirada.split(' ')[0].split('/');
+        if (parts.length === 3) {
+          docDate = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+        }
+      }
+      if (!docDate) return;
+
+      if (docDate < start || docDate > end) return;
+
+      const tipoRaw = (data.tipoCartao || '').toString().toLowerCase();
+      const tipo = tipoRaw.includes('digicon') ? 'digicon' : tipoRaw.includes('prodata') ? 'prodata' : (tipoRaw.includes('meia') ? 'meia' : tipoRaw);
+
+      const hasActiveType = (
+        (tipo === 'digicon' && activeTipos.includes('digicon')) ||
+        (tipo === 'prodata' && activeTipos.includes('prodata')) ||
+        (tipo === 'meia' && activeTipos.includes('meia'))
+      );
+
+      if (!hasActiveType) return;
+
+      const mat = data.matriculaMotorista || data.matricula || '---';
+      if (!counts[mat]) counts[mat] = { digicon: 0, prodata: 0, meia: 0 };
+      if (tipo === 'digicon') counts[mat].digicon += 1;
+      if (tipo === 'prodata') counts[mat].prodata += 1;
+      if (tipo === 'meia') counts[mat].meia += 1;
+
+      rows.push({ id: docSnap.id, data, tipo, docDate });
+    });
+
+    for (const r of rows) {
+      const d = r.data;
+      const tr = document.createElement('tr');
+
+      tr.innerHTML = `
+        <td>${d.nomeMotorista || ''}</td>
+        <td class="matricula">${d.matriculaMotorista || ''}</td>
+        <td>${d.tipoCartao || ''}</td>
+        <td>${d.numBordoDigicon || '-'}</td>
+        <td>${d.numBordoProdata || '-'}</td>
+        <td>${d.numMeiaViagem || '-'}</td>
+        <td>${d.motivo || ''}</td>
+        <td>${d.matriculaEmpresto || ''}</td>
+        <td>${d.dataRetirada || ''}</td>
+        <td>${d.prazoDevolucao || '-'}</td>
+        <td>
+          <button class="statusBtn" style="background:${d.status === 'em aberto' ? '#ff5555' : '#55ff55'};">
+            ${d.status}
+          </button>
+        </td>
+      `;
+
+      const statusBtn = tr.querySelector('.statusBtn');
+      statusBtn.addEventListener('click', async () => {
+        const novoStatus = d.status === 'em aberto' ? 'resolvido' : 'em aberto';
+        await db.collection('emprestimos').doc(r.id).update({ status: novoStatus });
+        d.status = novoStatus;
+        statusBtn.textContent = novoStatus;
+        statusBtn.style.background = novoStatus === 'em aberto' ? '#ff5555' : '#55ff55';
+      });
+
+      // badges
+      const tdMat = tr.querySelector('td.matricula');
+      const matKey = tdMat.textContent;
+      const matCounts = counts[matKey] || { digicon: 0, prodata: 0, meia: 0 };
+
+      const badgesWrap = document.createElement('div');
+      badgesWrap.style.display = 'flex';
+      badgesWrap.style.gap = '6px';
+      badgesWrap.style.justifyContent = 'center';
+      badgesWrap.style.marginTop = '4px';
+
+      const createBadge = (label, count, color, className) => {
+        const b = document.createElement('span');
+        b.className = `badge-type ${className}`;
+        b.textContent = `${label}: ${count}`;
+        b.style.padding = '4px 8px';
+        b.style.borderRadius = '999px';
+        b.style.fontSize = '0.75rem';
+        b.style.fontWeight = '700';
+        b.style.background = color;
+        b.style.color = '#111';
+        b.style.boxShadow = '0 2px 6px rgba(0,0,0,0.4)';
+        return b;
+      };
+
+      const colorDigicon = matCounts.digicon >= 4 ? '#e74c3c' : matCounts.digicon === 3 ? '#f5b041' : matCounts.digicon === 2 ? '#f9e79f' : '#bcd9a8';
+      const colorProdata = matCounts.prodata >= 4 ? '#ff6b6b' : matCounts.prodata === 3 ? '#ffb86b' : matCounts.prodata === 2 ? '#ffeaa7' : '#a0e7e5';
+      const colorMeia = matCounts.meia >= 4 ? '#d980fa' : matCounts.meia === 3 ? '#c77dff' : matCounts.meia === 2 ? '#e7c6ff' : '#d1c7ff';
+
+      const showZeros = false;
+
+      if (showZeros ? true : matCounts.digicon > 0) {
+        badgesWrap.appendChild(createBadge('Dig', matCounts.digicon, colorDigicon, 'badge-dig'));
+      }
+      if (showZeros ? true : matCounts.prodata > 0) {
+        badgesWrap.appendChild(createBadge('Pro', matCounts.prodata, colorProdata, 'badge-pro'));
+      }
+      if (showZeros ? true : matCounts.meia > 0) {
+        badgesWrap.appendChild(createBadge('Meia', matCounts.meia, colorMeia, 'badge-meia'));
+      }
+
+      tdMat.appendChild(badgesWrap);
+
+      tbody.appendChild(tr);
+    }
+
+    // color background of matricula based on month counts
+    Array.from(document.querySelectorAll('td.matricula')).forEach(td => {
+      const mat = td.childNodes[0] ? td.childNodes[0].textContent.trim() : td.textContent.trim();
+      const c = counts[mat] || { digicon: 0, prodata: 0, meia: 0 };
+      const total = c.digicon + c.prodata + c.meia;
+
+      if (total === 2) {
+        td.style.backgroundColor = "#f9e79f";
+        td.style.color = "#000";
+        td.style.fontWeight = "bold";
+      } else if (total === 3) {
+        td.style.backgroundColor = "#f5b041";
+        td.style.color = "#000";
+        td.style.fontWeight = "bold";
+      } else if (total >= 4) {
+        td.style.backgroundColor = "#e74c3c";
+        td.style.color = "#fff";
+        td.style.fontWeight = "bold";
+      } else {
+        td.style.backgroundColor = "transparent";
+        td.style.color = "#e0e0e0";
+        td.style.fontWeight = "normal";
+      }
+    });
+
+  } catch (err) {
+    console.error('Erro ao carregar relatório:', err);
+    alert('Erro ao carregar relatório. Veja o console.');
+  }
+}
+
+/* ---------- Inicialização ---------- */
+document.addEventListener('DOMContentLoaded', async () => {
+  await atualizarEstoque();
+  criarControles();
+  await carregarRelatorio();
+
+  // export (mantive sua lógica)
+  const table = document.getElementById('relatorioTable');
+  const exportBtn = document.getElementById('exportExcelBtn');
+  exportBtn.addEventListener('click', () => {
+    if (typeof XLSX === 'undefined') {
+      alert('Erro: SheetJS não carregado!');
+      return;
+    }
+    const wb = XLSX.utils.table_to_book(table, { sheet: 'Relatorio' });
+    XLSX.writeFile(wb, `Relatorio_Emprestimos_${new Date().toLocaleDateString()}.xlsx`);
+  });
+
+  // opcional: auto-refresh (comentado)
+  // setInterval(async () => { await atualizarEstoque(); await carregarRelatorio(); }, 60 * 1000);
+});
+</script>
+
+<footer class="footer">
+    Developed by Lucas L Custodio
+</footer>
+
+</body>
+</html>
