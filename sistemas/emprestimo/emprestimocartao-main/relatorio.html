@@ -17,177 +17,41 @@
 
 <style>
 /* --- mantive seu estilo original e adicionei classes novas --- */
-body {
-    background-color: #121212;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: #e0e0e0;
-    margin: 0;
-    padding: 20px;
-}
-header {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 20px;
-}
+body { background-color: #121212; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #e0e0e0; margin: 0; padding: 20px; }
+header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
 header img.logo { height: 50px; }
 header h1 { flex-grow:1; font-size: 1.5rem; color: #00ff7f; }
-header button {
-    padding:5px 10px; border-radius:5px; border:none;
-    cursor:pointer; background:#00ff7f; color:#111;
-}
+header button { padding:5px 10px; border-radius:5px; border:none; cursor:pointer; background:#00ff7f; color:#111; }
 main { display: flex; gap: 20px; align-items:flex-start; }
-#estoque {
-    width: 260px; background: #1e1e1e;
-    padding: 15px; border-radius: 10px; color: #e0e0e0;
-    height: fit-content;
-}
+#estoque { width: 260px; background: #1e1e1e; padding: 15px; border-radius: 10px; color: #e0e0e0; height: fit-content; }
 #estoque h2 { color: #00ff7f; font-size: 1.1rem; margin-bottom: 10px; }
-.cardEstoque {
-    background: #2a2a2a; border-radius: 8px;
-    padding: 10px; margin-bottom: 10px;
-}
+.cardEstoque { background: #2a2a2a; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
 .cardEstoque h3 { margin: 0; font-size: 1rem; color: #00b894; }
 .cardEstoque p { margin: 3px 0; font-size: 0.9rem; }
 
-.controls-bar {
-  display:flex;
-  gap:12px;
-  align-items:center;
-  margin-bottom:12px;
-  flex-wrap:wrap;
-}
+.controls-bar { display:flex; gap:12px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
+#monthSelect, .filterTipoBtn, #cardNumberFilter, #matriculaFilter, .countBtn { border-radius: 8px; border:1px solid rgba(255,255,255,0.06); background:#222; color:#fff; cursor:pointer; font-weight:600; padding:6px 10px; }
 
-/* filtro mes + tipos + numero + counts */
-#monthSelect {
-  padding:8px 10px;
-  border-radius:8px;
-  background:#222;
-  color:#fff;
-  border:1px solid rgba(255,255,255,0.06);
-  font-weight:600;
-}
-.filterTipoBtn {
-  padding:6px 10px;
-  border-radius:8px;
-  border:1px solid rgba(255,255,255,0.06);
-  background:#222;
-  color:#fff;
-  cursor:pointer;
-  font-weight:700;
-}
-#btnTodosTipos {
-  background:#00ff7f;
-  color:#111;
-  font-weight:800;
-  border: none;
-}
-
-#cardNumberFilter {
-  width:72px;
-  padding:6px 8px;
-  border-radius:8px;
-  background:#222;
-  color:#fff;
-  border:1px solid rgba(255,255,255,0.06);
-}
-
-#matriculaFilter {
-  width:110px;
-  padding:6px 8px;
-  border-radius:8px;
-  background:#222;
-  color:#fff;
-  border:1px solid rgba(255,255,255,0.06);
-}
+#btnTodosTipos { background:#00ff7f; color:#111; font-weight:800; border:none; }
 
 .count-filters { display:flex; gap:8px; align-items:center; }
-
-/* count buttons */
-.countBtn {
-  padding:6px 10px;
-  border-radius:8px;
-  border:1px solid rgba(255,255,255,0.06);
-  background:#222;
-  color:#fff;
-  cursor:pointer;
-  font-weight:700;
-  opacity: 1;
-}
 .countBtn.inactive { opacity: 0.4; }
 
-.count-filters label { font-size:0.9rem; display:flex; gap:6px; align-items:center; }
-
-.legend {
-  margin-left:auto;
-  display:flex;
-  gap:10px;
-  align-items:center;
-  font-size:0.9rem;
-}
+.legend { margin-left:auto; display:flex; gap:10px; align-items:center; font-size:0.9rem; }
 .legend .item { display:flex; gap:8px; align-items:center; }
+.legend-swatch { width:16px; height:12px; border-radius:4px; display:inline-block; }
 
 .table-wrap { flex:1; }
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: #1f1f1f;
-    border-radius: 8px;
-    overflow: hidden;
-}
-th, td {
-    padding: 6px 8px;
-    text-align: left;
-    border-bottom: 1px solid #333;
-    font-size: 0.95rem;
-    color: #e0e0e0;
-    vertical-align: middle;
-}
+table { width: 100%; border-collapse: collapse; background: #1f1f1f; border-radius: 8px; overflow: hidden; }
+th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #333; font-size: 0.95rem; color: #e0e0e0; vertical-align: middle; }
 th { background-color: #00ff7f; color: #111; }
 tr:hover { background-color: #333; }
-.statusBtn {
-    padding:5px 18px; border:none; border-radius:5px;
-    cursor:pointer; color:#111; font-weight: bold;
-}
-
-/* matrícula cell with badges container */
-td.matricula {
-  font-weight: bold;
-  text-align: center;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:6px;
-  padding-top:10px;
-  padding-bottom:10px;
-}
-
-/* badge small */
-.badge-type {
-  padding:4px 8px;
-  border-radius:999px;
-  font-size:0.78rem;
-  font-weight:700;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.45);
-}
-
-/* legend swatches */
-.legend-swatch {
-  width:16px; height:12px; border-radius:4px; display:inline-block;
-}
-
-/* bottom spacer so list not cut */
+.statusBtn { padding:5px 18px; border:none; border-radius:5px; cursor:pointer; color:#111; font-weight: bold; }
+td.matricula { font-weight: bold; text-align: center; display:flex; flex-direction:column; align-items:center; gap:6px; padding-top:10px; padding-bottom:10px; }
+.badge-type { padding:4px 8px; border-radius:999px; font-size:0.78rem; font-weight:700; box-shadow: 0 2px 6px rgba(0,0,0,0.45); }
 .table-bottom-spacer { height: 70px; }
-
-/* footer */
 .footer { margin-top:18px; color:#888; text-align:center; }
-
-/* responsive tweaks */
-@media(max-width:900px){
-  main { flex-direction:column; }
-  #estoque { width:100%; }
-}
+@media(max-width:900px){ main { flex-direction:column; } #estoque { width:100%; } }
 </style>
 </head>
 <body>
@@ -205,7 +69,6 @@ td.matricula {
     </aside>
 
     <div class="table-wrap">
-        <!-- controles dinâmicos serão inseridos pelo script -->
         <div id="controlsHolder"></div>
 
         <table id="relatorioTable">
@@ -226,15 +89,12 @@ td.matricula {
             </thead>
             <tbody id="relatorioBody"></tbody>
         </table>
-
-        <!-- espaçador para não cortar a lista -->
         <div class="table-bottom-spacer" aria-hidden="true"></div>
     </div>
 </main>
 
 <script src="firebaseConfig.js"></script>
 <script>
-/* ---------- atualizarEstoque (mantive lógica original) ---------- */
 async function atualizarEstoque() {
   const estoqueDiv = document.getElementById("estoqueConteudo");
   estoqueDiv.innerHTML = "Atualizando...";
@@ -248,7 +108,7 @@ async function atualizarEstoque() {
 
   snapshot.forEach(doc => {
     const data = doc.data();
-    const tipo = (data.tipoCartao || '').toString().toLowerCase();
+    const tipo = (data.tipoCartao || '').toLowerCase();
     if (tipo === "digicon" && data.numBordoDigicon) emprestados.digicon.push(Number(data.numBordoDigicon));
     if (tipo === "prodata" && data.numBordoProdata) emprestados.prodata.push(Number(data.numBordoProdata));
     if (data.numMeiaViagem) emprestados.meiaViagem.push(Number(data.numMeiaViagem));
@@ -259,48 +119,39 @@ async function atualizarEstoque() {
     const todos = Array.from({ length: total[chave] }, (_, i) => i + 1);
     const disponiveis = todos.filter(n => !emprestados[chave].includes(n));
     const titulo = chave === 'digicon' ? 'Bordo Digicon' : chave === 'prodata' ? 'Bordo Prodata' : 'Meia Viagem';
-    return `
-      <div class="cardEstoque">
-        <h3>${titulo}</h3>
-        <p><b>Qtd. Disponível:</b> ${disponiveis.length}</p>
-        <p><b>Qtd. Emprestado:</b> ${emprestados[chave].length}</p>
-        <p><b>N° Disponíveis:</b> ${disponiveis.join(', ') || '-'}</p>
-        <p><b>N° Emprestados:</b> ${emprestados[chave].join(', ') || '-'}</p>
-      </div>`;
+    return `<div class="cardEstoque">
+      <h3>${titulo}</h3>
+      <p><b>Qtd. Disponível:</b> ${disponiveis.length}</p>
+      <p><b>Qtd. Emprestado:</b> ${emprestados[chave].length}</p>
+      <p><b>N° Disponíveis:</b> ${disponiveis.join(', ') || '-'}</p>
+      <p><b>N° Emprestados:</b> ${emprestados[chave].join(', ') || '-'}</p>
+    </div>`;
   }
 
-  estoqueDiv.innerHTML =
-    gerarLista("digicon") +
-    gerarLista("prodata") +
-    gerarLista("meiaViagem");
+  estoqueDiv.innerHTML = gerarLista("digicon") + gerarLista("prodata") + gerarLista("meiaViagem");
 }
 
-/* ---------- Helpers para mês ---------- */
 function getMonthId(date = new Date()) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
-  return `${y}-${m}`; // YYYY-MM
+  return `${y}-${m}`;
 }
-
 function monthIdToRange(monthId) {
   const [y, m] = monthId.split('-').map(Number);
   const first = new Date(y, m - 1, 1, 0, 0, 0);
   const last = new Date(y, m, 0, 23, 59, 59, 999);
   return { start: first, end: last };
 }
-
 function formatMonthLabel(monthId) {
   const [y, m] = monthId.split('-').map(Number);
   const d = new Date(y, m - 1, 1);
   return d.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
 }
 
-/* ---------- Cria controles dinâmicos (mês, tipo, legenda, número, counts, matrícula) ---------- */
 function criarControles() {
   const container = document.createElement('div');
   container.className = 'controls-bar';
 
-  // Month select
   const monthSelect = document.createElement('select');
   monthSelect.id = 'monthSelect';
   monthSelect.title = 'Selecionar mês';
@@ -314,225 +165,129 @@ function criarControles() {
     monthSelect.appendChild(opt);
   }
 
-  // Toggle buttons for types
   const toggles = document.createElement('div');
-  toggles.style.display = 'flex';
-  toggles.style.gap = '8px';
-  toggles.style.alignItems = 'center';
-
-  ['digicon', 'prodata', 'meia'].forEach(key => {
+  toggles.style.display = 'flex'; toggles.style.gap = '8px'; toggles.style.alignItems = 'center';
+  ['digicon','prodata','meia'].forEach(key => {
     const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'filterTipoBtn';
-    btn.dataset.tipo = key;
-    btn.textContent = key === 'digicon' ? 'Digicon' : key === 'prodata' ? 'Prodata' : 'Meia';
-    btn.style.padding = '6px 10px';
-    btn.style.borderRadius = '8px';
-    btn.style.border = '1px solid rgba(255,255,255,0.06)';
-    btn.style.background = '#222';
-    btn.style.color = '#fff';
-    btn.style.cursor = 'pointer';
-    btn.dataset.active = 'true';
-    toggles.appendChild(btn);
+    btn.type='button'; btn.className='filterTipoBtn'; btn.dataset.tipo=key;
+    btn.textContent = key==='digicon'?'Digicon':key==='prodata'?'Prodata':'Meia';
+    btn.dataset.active='true'; toggles.appendChild(btn);
   });
-
   const btnTodos = document.createElement('button');
-  btnTodos.type = 'button';
-  btnTodos.id = 'btnTodosTipos';
-  btnTodos.textContent = 'Todos';
-  btnTodos.style.padding = '6px 10px';
-  btnTodos.style.borderRadius = '8px';
-  btnTodos.style.border = '1px solid rgba(255,255,255,0.06)';
-  btnTodos.style.background = '#00ff7f';
-  btnTodos.style.color = '#111';
-  btnTodos.style.cursor = 'pointer';
-  toggles.insertBefore(btnTodos, toggles.firstChild);
+  btnTodos.type='button'; btnTodos.id='btnTodosTipos'; btnTodos.textContent='Todos';
+  toggles.insertBefore(btnTodos,toggles.firstChild);
 
   const cardNumberFilter = document.createElement('input');
-  cardNumberFilter.type = 'number';
-  cardNumberFilter.id = 'cardNumberFilter';
-  cardNumberFilter.placeholder = 'Nº card';
-  cardNumberFilter.title = 'Filtrar por número do cartão (ex: 3)';
+  cardNumberFilter.type='number'; cardNumberFilter.id='cardNumberFilter'; cardNumberFilter.placeholder='Nº card';
 
   const matriculaFilter = document.createElement('input');
-  matriculaFilter.type = 'text';
-  matriculaFilter.id = 'matriculaFilter';
-  matriculaFilter.placeholder = 'Matricula';
-  matriculaFilter.title = 'Filtrar por matrícula (parte ou inteira)';
+  matriculaFilter.type='text'; matriculaFilter.id='matriculaFilter'; matriculaFilter.placeholder='Matricula';
 
-  const countFilters = document.createElement('div');
-  countFilters.className = 'count-filters';
-  countFilters.title = 'Filtrar por quantidade de cartões retirados pelo motorista';
-
+  const countFilters = document.createElement('div'); countFilters.className='count-filters';
   ['1','2','3','4+'].forEach(lbl => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'countBtn';
-    btn.dataset.count = lbl;
-    btn.dataset.active = 'true';
-    btn.textContent = lbl;
-    btn.style.padding = '6px 10px';
-    btn.style.borderRadius = '8px';
-    btn.style.border = '1px solid rgba(255,255,255,0.06)';
-    btn.style.background = '#222';
-    btn.style.color = '#fff';
-    btn.style.cursor = 'pointer';
+    const btn = document.createElement('button'); btn.type='button'; btn.className='countBtn'; btn.dataset.count=lbl; btn.dataset.active='true'; btn.textContent=lbl;
     countFilters.appendChild(btn);
   });
 
-  const legend = document.createElement('div');
-  legend.className = 'legend';
-  const thresholds = [
-    { label: '1', color: '#bcd9a8' },
-    { label: '2', color: '#f9e79f' },
-    { label: '3', color: '#f5b041' },
-    { label: '4+', color: '#e74c3c' }
-  ];
-  thresholds.forEach(t => {
-    const item = document.createElement('div');
-    item.className = 'item';
-    const sw = document.createElement('span');
-    sw.className = 'legend-swatch';
-    sw.style.background = t.color;
-    const lbl = document.createElement('span');
-    lbl.textContent = t.label;
-    item.appendChild(sw);
-    item.appendChild(lbl);
+  const legend = document.createElement('div'); legend.className='legend';
+  [{label:'1',color:'#bcd9a8'},{label:'2',color:'#f9e79f'},{label:'3',color:'#f5b041'},{label:'4+',color:'#e74c3c'}].forEach(t=>{
+    const item=document.createElement('div'); item.className='item';
+    const sw=document.createElement('span'); sw.className='legend-swatch'; sw.style.background=t.color;
+    const lbl=document.createElement('span'); lbl.textContent=t.label; item.appendChild(sw); item.appendChild(lbl);
     legend.appendChild(item);
   });
 
-  container.appendChild(monthSelect);
-  container.appendChild(toggles);
-  container.appendChild(cardNumberFilter);
-  container.appendChild(matriculaFilter);
-  container.appendChild(countFilters);
-  container.appendChild(legend);
+  container.appendChild(monthSelect); container.appendChild(toggles); container.appendChild(cardNumberFilter);
+  container.appendChild(matriculaFilter); container.appendChild(countFilters); container.appendChild(legend);
+  document.getElementById('controlsHolder').appendChild(container);
 
-  const holder = document.getElementById('controlsHolder');
-  holder.appendChild(container);
-
-  monthSelect.addEventListener('change', () => { carregarRelatorio(); });
-  toggles.querySelectorAll('.filterTipoBtn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      btn.dataset.active = btn.dataset.active === 'true' ? 'false' : 'true';
-      btn.style.opacity = btn.dataset.active === 'true' ? '1' : '0.45';
-      const all = Array.from(toggles.querySelectorAll('.filterTipoBtn'));
-      if (all.every(b => b.dataset.active === 'false')) {
-        all.forEach(b => { b.dataset.active = 'true'; b.style.opacity = '1'; });
-      }
+  monthSelect.addEventListener('change', () => carregarRelatorio());
+  toggles.querySelectorAll('.filterTipoBtn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      btn.dataset.active = btn.dataset.active==='true'?'false':'true';
+      btn.style.opacity = btn.dataset.active==='true'?'1':'0.45';
+      const all=Array.from(toggles.querySelectorAll('.filterTipoBtn'));
+      if(all.every(b=>b.dataset.active==='false')) all.forEach(b=>{b.dataset.active='true'; b.style.opacity='1';});
       carregarRelatorio();
     });
   });
-  btnTodos.addEventListener('click', () => {
-    const all = Array.from(toggles.querySelectorAll('.filterTipoBtn'));
-    const anyInactive = all.some(b => b.dataset.active === 'false');
-    if (anyInactive) {
-      all.forEach(b => { b.dataset.active = 'true'; b.style.opacity = '1'; });
-    } else {
-      all.forEach(b => { b.dataset.active = 'false'; b.style.opacity = '0.45'; });
-      all.forEach(b => { b.dataset.active = 'true'; b.style.opacity = '1'; });
-    }
+  btnTodos.addEventListener('click',()=>{
+    const all=Array.from(toggles.querySelectorAll('.filterTipoBtn'));
+    const anyInactive = all.some(b=>b.dataset.active==='false');
+    all.forEach(b=>{b.dataset.active='true'; b.style.opacity='1';});
     carregarRelatorio();
   });
-  cardNumberFilter.addEventListener('input', () => { carregarRelatorio(); });
-  matriculaFilter.addEventListener('input', () => { carregarRelatorio(); });
-  countFilters.querySelectorAll('button.countBtn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      btn.dataset.active = btn.dataset.active === 'true' ? 'false' : 'true';
-      btn.classList.toggle('inactive', btn.dataset.active === 'false');
+  cardNumberFilter.addEventListener('input', ()=>carregarRelatorio());
+  matriculaFilter.addEventListener('input', ()=>carregarRelatorio());
+  countFilters.querySelectorAll('button.countBtn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      btn.dataset.active = btn.dataset.active==='true'?'false':'true';
+      btn.classList.toggle('inactive', btn.dataset.active==='false');
       const all = Array.from(countFilters.querySelectorAll('button.countBtn'));
-      if (all.every(b => b.dataset.active === 'false')) {
-        all.forEach(b => { b.dataset.active = 'true'; b.classList.remove('inactive'); });
-      }
+      if(all.every(b=>b.dataset.active==='false')) all.forEach(b=>{b.dataset.active='true'; b.classList.remove('inactive');});
       carregarRelatorio();
     });
   });
-  monthSelect.value = getMonthId(new Date());
+  monthSelect.value=getMonthId(new Date());
 }
 
-/* ---------- Lê dados e monta tabela filtrada pelo mês e tipo, por número e por counts (e matrícula) ---------- */
 async function carregarRelatorio() {
-  const tbody = document.getElementById('relatorioBody');
-  tbody.innerHTML = '';
-  const monthSelect = document.getElementById('monthSelect');
-  const selectedMonth = monthSelect ? monthSelect.value : getMonthId(new Date());
-  const { start, end } = monthIdToRange(selectedMonth);
+  const tbody = document.getElementById('relatorioBody'); tbody.innerHTML='';
+  const monthSelect = document.getElementById('monthSelect'); const selectedMonth = monthSelect?monthSelect.value:getMonthId(new Date());
+  const {start,end} = monthIdToRange(selectedMonth);
 
-  const tipoBtns = document.querySelectorAll('.filterTipoBtn');
-  const tiposAtivos = Array.from(tipoBtns).filter(b => b.dataset.active==='true').map(b=>b.dataset.tipo);
-
+  const tiposAtivos = Array.from(document.querySelectorAll('.filterTipoBtn')).filter(b=>b.dataset.active==='true').map(b=>b.dataset.tipo);
   const cardNumberFilterValue = document.getElementById('cardNumberFilter')?.value;
   const matriculaFilterValue = document.getElementById('matriculaFilter')?.value.trim().toLowerCase();
+  const countsAtivos = Array.from(document.querySelectorAll('.countBtn')).filter(b=>b.dataset.active==='true').map(b=>b.dataset.count);
 
-  const countBtns = document.querySelectorAll('.countBtn');
-  const countsAtivos = Array.from(countBtns).filter(b => b.dataset.active==='true').map(b=>b.dataset.count);
+  const snapshot = await db.collection('emprestimos').where('dataRetirada','>=',start).where('dataRetirada','<=',end).get();
+  const dados = []; snapshot.forEach(doc=>dados.push({...doc.data()}));
 
-  const snapshot = await db.collection('emprestimos')
-    .where('dataRetirada', '>=', start)
-    .where('dataRetirada', '<=', end)
-    .get();
-
-  const dados = [];
-  snapshot.forEach(doc => {
-    const d = doc.data();
-    dados.push({...d});
-  });
-
-  // filtra por tipo ativo
-  const filtrados = dados.filter(d => {
-    const tipo = (d.tipoCartao||'').toLowerCase();
-    return tiposAtivos.includes(tipo);
-  });
-
-  // filtra por card number
+  const filtrados = dados.filter(d => tiposAtivos.includes((d.tipoCartao||'').toLowerCase()));
   const filtradosCard = cardNumberFilterValue ? filtrados.filter(d => {
-    const n = Number(cardNumberFilterValue);
-    return (Number(d.numBordoDigicon)===n) || (Number(d.numBordoProdata)===n) || (Number(d.numMeiaViagem)===n);
+    const n=Number(cardNumberFilterValue);
+    return (Number(d.numBordoDigicon)===n)||(Number(d.numBordoProdata)===n)||(Number(d.numMeiaViagem)===n);
   }) : filtrados;
 
-  // filtra por count (quantidade de cartões retirados pelo motorista)
-  const filtradosCount = filtradosCard.filter(d => {
-    const q = ['numBordoDigicon','numBordoProdata','numMeiaViagem']
-      .map(k => d[k]?1:0)
-      .reduce((a,b)=>a+b,0);
-    if (q>=4 && countsAtivos.includes('4+')) return true;
-    if (q<4 && countsAtivos.includes(q.toString())) return true;
+  const filtradosCount = filtradosCard.filter(d=>{
+    const q=['numBordoDigicon','numBordoProdata','numMeiaViagem'].map(k=>d[k]?1:0).reduce((a,b)=>a+b,0);
+    if(q>=4 && countsAtivos.includes('4+')) return true;
+    if(q<4 && countsAtivos.includes(q.toString())) return true;
     return false;
   });
 
-  // filtro de matrícula **corrigido** (ignora maiúsc/minúsc, espaços, e busca substring)
-  const finalFiltrados = filtradosCount.filter(d => {
-    if (!matriculaFilterValue) return true;
-    const mat = (d.matricula || '').toString().trim().toLowerCase();
+  // 🔹 Correção: filtro de matrícula só aplica se houver valor digitado
+  const finalFiltrados = filtradosCount.filter(d=>{
+    if(!matriculaFilterValue) return true;
+    const mat = (d.matricula||'').toString().trim().toLowerCase();
     return mat.includes(matriculaFilterValue);
   });
 
-  // monta tbody
-  for (const d of finalFiltrados) {
+  for(const d of finalFiltrados){
     const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${d.nome || '-'}</td>
-      <td class="matricula">${d.matricula || '-'}</td>
-      <td>${d.tipoCartao || '-'}</td>
-      <td>${d.numBordoDigicon || '-'}</td>
-      <td>${d.numBordoProdata || '-'}</td>
-      <td>${d.numMeiaViagem || '-'}</td>
-      <td>${d.motivo || '-'}</td>
-      <td>${d.matriculaEmprestimo || '-'}</td>
-      <td>${d.dataRetirada ? new Date(d.dataRetirada.seconds*1000).toLocaleDateString() : '-'}</td>
-      <td>${d.prazoDevolucao ? new Date(d.prazoDevolucao.seconds*1000).toLocaleDateString() : '-'}</td>
+    tr.innerHTML=`
+      <td>${d.nome||'-'}</td>
+      <td class="matricula">${d.matricula||'-'}</td>
+      <td>${d.tipoCartao||'-'}</td>
+      <td>${d.numBordoDigicon||'-'}</td>
+      <td>${d.numBordoProdata||'-'}</td>
+      <td>${d.numMeiaViagem||'-'}</td>
+      <td>${d.motivo||'-'}</td>
+      <td>${d.matriculaEmprestimo||'-'}</td>
+      <td>${d.dataRetirada?new Date(d.dataRetirada.seconds*1000).toLocaleDateString():'-'}</td>
+      <td>${d.prazoDevolucao?new Date(d.prazoDevolucao.seconds*1000).toLocaleDateString():'-'}</td>
       <td><button class="statusBtn" style="background:${d.status==='em aberto'?'#f5b041':'#2ecc71'}">${d.status||'-'}</button></td>
     `;
     tbody.appendChild(tr);
   }
 }
 
-/* ---------- Inicialização ---------- */
-window.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener('DOMContentLoaded', async ()=>{
   criarControles();
   await atualizarEstoque();
   await carregarRelatorio();
-  setInterval(atualizarEstoque, 60*1000); // atualiza estoque a cada 1min
+  setInterval(atualizarEstoque,60*1000);
 });
 </script>
 
