@@ -304,7 +304,6 @@ function criarControles() {
   const monthSelect = document.createElement('select');
   monthSelect.id = 'monthSelect';
   monthSelect.title = 'Selecionar mês';
-  // Preencher últimos 12 meses (inclui atual)
   const current = new Date();
   for (let i = 0; i < 12; i++) {
     const d = new Date(current.getFullYear(), current.getMonth() - i, 1);
@@ -333,11 +332,10 @@ function criarControles() {
     btn.style.background = '#222';
     btn.style.color = '#fff';
     btn.style.cursor = 'pointer';
-    btn.dataset.active = 'true'; // default active
+    btn.dataset.active = 'true';
     toggles.appendChild(btn);
   });
 
-  // "Todos" toggle
   const btnTodos = document.createElement('button');
   btnTodos.type = 'button';
   btnTodos.id = 'btnTodosTipos';
@@ -350,21 +348,18 @@ function criarControles() {
   btnTodos.style.cursor = 'pointer';
   toggles.insertBefore(btnTodos, toggles.firstChild);
 
-  // Card number filter (small input)
   const cardNumberFilter = document.createElement('input');
   cardNumberFilter.type = 'number';
   cardNumberFilter.id = 'cardNumberFilter';
   cardNumberFilter.placeholder = 'Nº card';
   cardNumberFilter.title = 'Filtrar por número do cartão (ex: 3)';
 
-  // Matricula filter (novo)
   const matriculaFilter = document.createElement('input');
   matriculaFilter.type = 'text';
   matriculaFilter.id = 'matriculaFilter';
   matriculaFilter.placeholder = 'Matricula';
   matriculaFilter.title = 'Filtrar por matrícula (parte ou inteira)';
 
-  // Count filters as BUTTONS (1,2,3,4+)
   const countFilters = document.createElement('div');
   countFilters.className = 'count-filters';
   countFilters.title = 'Filtrar por quantidade de cartões retirados pelo motorista';
@@ -374,7 +369,7 @@ function criarControles() {
     btn.type = 'button';
     btn.className = 'countBtn';
     btn.dataset.count = lbl;
-    btn.dataset.active = 'true'; // default all active
+    btn.dataset.active = 'true';
     btn.textContent = lbl;
     btn.style.padding = '6px 10px';
     btn.style.borderRadius = '8px';
@@ -385,10 +380,8 @@ function criarControles() {
     countFilters.appendChild(btn);
   });
 
-  // Legend / Índice cores
   const legend = document.createElement('div');
   legend.className = 'legend';
-
   const thresholds = [
     { label: '1', color: '#bcd9a8' },
     { label: '2', color: '#f9e79f' },
@@ -411,20 +404,14 @@ function criarControles() {
   container.appendChild(monthSelect);
   container.appendChild(toggles);
   container.appendChild(cardNumberFilter);
-  container.appendChild(matriculaFilter); // inserido ao lado do número
+  container.appendChild(matriculaFilter);
   container.appendChild(countFilters);
   container.appendChild(legend);
 
-  // Inserir antes da tabela
-  const tableWrap = document.querySelector('.table-wrap');
   const holder = document.getElementById('controlsHolder');
   holder.appendChild(container);
 
-  // Event handlers
-  monthSelect.addEventListener('change', () => {
-    carregarRelatorio();
-  });
-
+  monthSelect.addEventListener('change', () => { carregarRelatorio(); });
   toggles.querySelectorAll('.filterTipoBtn').forEach(btn => {
     btn.addEventListener('click', () => {
       btn.dataset.active = btn.dataset.active === 'true' ? 'false' : 'true';
@@ -436,37 +423,23 @@ function criarControles() {
       carregarRelatorio();
     });
   });
-
   btnTodos.addEventListener('click', () => {
     const all = Array.from(toggles.querySelectorAll('.filterTipoBtn'));
     const anyInactive = all.some(b => b.dataset.active === 'false');
     if (anyInactive) {
       all.forEach(b => { b.dataset.active = 'true'; b.style.opacity = '1'; });
     } else {
-      // toggle off then on to ensure visual feedback (but effectively keep all on)
       all.forEach(b => { b.dataset.active = 'false'; b.style.opacity = '0.45'; });
       all.forEach(b => { b.dataset.active = 'true'; b.style.opacity = '1'; });
     }
     carregarRelatorio();
   });
-
-  // card number listener
-  cardNumberFilter.addEventListener('input', () => {
-    carregarRelatorio();
-  });
-
-  // matricula listener (novo)
-  matriculaFilter.addEventListener('input', () => {
-    carregarRelatorio();
-  });
-
-  // count buttons listener: toggle active/inactive
+  cardNumberFilter.addEventListener('input', () => { carregarRelatorio(); });
+  matriculaFilter.addEventListener('input', () => { carregarRelatorio(); });
   countFilters.querySelectorAll('button.countBtn').forEach(btn => {
     btn.addEventListener('click', () => {
       btn.dataset.active = btn.dataset.active === 'true' ? 'false' : 'true';
       btn.classList.toggle('inactive', btn.dataset.active === 'false');
-
-      // if none active, re-activate all (safer UX)
       const all = Array.from(countFilters.querySelectorAll('button.countBtn'));
       if (all.every(b => b.dataset.active === 'false')) {
         all.forEach(b => { b.dataset.active = 'true'; b.classList.remove('inactive'); });
@@ -474,8 +447,6 @@ function criarControles() {
       carregarRelatorio();
     });
   });
-
-  // Set default month to current
   monthSelect.value = getMonthId(new Date());
 }
 
@@ -487,130 +458,86 @@ async function carregarRelatorio() {
   const selectedMonth = monthSelect ? monthSelect.value : getMonthId(new Date());
   const { start, end } = monthIdToRange(selectedMonth);
 
-  const activeTipos = Array.from(document.querySelectorAll('.filterTipoBtn'))
-    .filter(b => b.dataset.active === 'true')
-    .map(b => b.dataset.tipo);
+  const tipoBtns = document.querySelectorAll('.filterTipoBtn');
+  const tiposAtivos = Array.from(tipoBtns).filter(b => b.dataset.active==='true').map(b=>b.dataset.tipo);
 
-  const selectedCounts = Array.from(document.querySelectorAll('.countBtn'))
-    .filter(b => b.dataset.active === 'true')
-    .map(b => b.dataset.count);
+  const cardNumberFilterValue = document.getElementById('cardNumberFilter')?.value;
+  const matriculaFilterValue = document.getElementById('matriculaFilter')?.value.trim().toLowerCase();
 
-  const cardNumberValue = (document.getElementById('cardNumberFilter')?.value || '').trim();
-  const matriculaFilterValue = (document.getElementById('matriculaFilter')?.value || '').trim();
+  const countBtns = document.querySelectorAll('.countBtn');
+  const countsAtivos = Array.from(countBtns).filter(b => b.dataset.active==='true').map(b=>b.dataset.count);
 
-  const counts = {};
-  const rows = [];
+  const snapshot = await db.collection('emprestimos')
+    .where('dataRetirada', '>=', start)
+    .where('dataRetirada', '<=', end)
+    .get();
 
-  try {
-    const snapshot = await db.collection('emprestimos').orderBy('timestamp','desc').get();
+  const dados = [];
+  snapshot.forEach(doc => {
+    const d = doc.data();
+    dados.push({...d});
+  });
 
-    snapshot.forEach(docSnap => {
-      const data = docSnap.data();
-      let docDate = null;
-      if (data.timestamp && data.timestamp.toDate) docDate = data.timestamp.toDate();
-      else if (data.dataRetirada) {
-        const parts = data.dataRetirada.split(' ')[0].split('/');
-        if (parts.length === 3) docDate = new Date(Number(parts[2]), Number(parts[1])-1, Number(parts[0]));
-      }
-      if (!docDate) return;
-      if (docDate < start || docDate > end) return;
+  // filtra por tipo ativo
+  const filtrados = dados.filter(d => {
+    const tipo = (d.tipoCartao||'').toLowerCase();
+    return tiposAtivos.includes(tipo);
+  });
 
-      const tipoRaw = (data.tipoCartao || '').toString().toLowerCase();
-      const tipo = tipoRaw.includes('digicon') ? 'digicon' : tipoRaw.includes('prodata') ? 'prodata' : tipoRaw.includes('meia') ? 'meia' : tipoRaw;
+  // filtra por card number
+  const filtradosCard = cardNumberFilterValue ? filtrados.filter(d => {
+    const n = Number(cardNumberFilterValue);
+    return (Number(d.numBordoDigicon)===n) || (Number(d.numBordoProdata)===n) || (Number(d.numMeiaViagem)===n);
+  }) : filtrados;
 
-      if (!activeTipos.includes(tipo)) return;
+  // filtra por count (quantidade de cartões retirados pelo motorista)
+  const filtradosCount = filtradosCard.filter(d => {
+    const q = ['numBordoDigicon','numBordoProdata','numMeiaViagem']
+      .map(k => d[k]?1:0)
+      .reduce((a,b)=>a+b,0);
+    if (q>=4 && countsAtivos.includes('4+')) return true;
+    if (q<4 && countsAtivos.includes(q.toString())) return true;
+    return false;
+  });
 
-      const mat = data.matriculaMotorista || data.matricula || '---';
-      if (!counts[mat]) counts[mat] = { digicon: 0, prodata: 0, meia: 0 };
-      if (tipo === 'digicon') counts[mat].digicon++;
-      if (tipo === 'prodata') counts[mat].prodata++;
-      if (tipo === 'meia') counts[mat].meia++;
+  // filtro de matrícula **corrigido** (ignora maiúsc/minúsc, espaços, e busca substring)
+  const finalFiltrados = filtradosCount.filter(d => {
+    if (!matriculaFilterValue) return true;
+    const mat = (d.matricula || '').toString().trim().toLowerCase();
+    return mat.includes(matriculaFilterValue);
+  });
 
-      rows.push({ id: docSnap.id, data, tipo, docDate, matricula: mat });
-    });
-
-    // ---------- FILTROS ----------
-
-    // 1) Filtrar por contagem
-    const matriculasQuePassam = new Set();
-    for (const mat in counts) {
-      const c = counts[mat];
-      const totalForActive = (activeTipos.includes('digicon') ? c.digicon : 0) +
-                             (activeTipos.includes('prodata') ? c.prodata : 0) +
-                             (activeTipos.includes('meia') ? c.meia : 0);
-      let label = totalForActive >= 4 ? '4+' : totalForActive.toString();
-      if (selectedCounts.includes(label)) matriculasQuePassam.add(mat);
-    }
-
-    // 2) Filtrar por número do cartão
-    let matriculasCard = new Set();
-    if (cardNumberValue !== '') {
-      for (const r of rows) {
-        const d = r.data;
-        if ((r.tipo === 'digicon' && d.numBordoDigicon == cardNumberValue) ||
-            (r.tipo === 'prodata' && d.numBordoProdata == cardNumberValue) ||
-            (r.tipo === 'meia' && d.numMeiaViagem == cardNumberValue)) {
-          matriculasCard.add(r.matricula);
-        }
-      }
-    } else {
-      matriculasCard = new Set([...matriculasQuePassam]);
-    }
-
-    // 3) Filtrar por matrícula substring
-    let matriculasFinal = new Set();
-    matriculasCard.forEach(mat => {
-      if (matriculaFilterValue === '' || mat.includes(matriculaFilterValue)) {
-        matriculasFinal.add(mat);
-      }
-    });
-
-    // ---------- RENDER ----------
-    for (const r of rows) {
-      const matKey = r.matricula;
-      if (!matriculasFinal.has(matKey)) continue;
-
-      const d = r.data;
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${d.nomeMotorista || ''}</td>
-        <td class="matricula">${matKey}</td>
-        <td>${d.tipoCartao || ''}</td>
-        <td>${d.numBordoDigicon || '-'}</td>
-        <td>${d.numBordoProdata || '-'}</td>
-        <td>${d.numMeiaViagem || '-'}</td>
-        <td>${d.motivo || ''}</td>
-        <td>${d.matriculaEmpresto || ''}</td>
-        <td>${d.dataRetirada || ''}</td>
-        <td>${d.prazoDevolucao || '-'}</td>
-        <td>
-          <button class="statusBtn" style="background:${d.status==='em aberto'?'#ff5555':'#55ff55'}">
-            ${d.status}
-          </button>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    }
-
-  } catch(err) {
-    console.error(err);
-    tbody.innerHTML = '<tr><td colspan="11">Erro ao carregar dados</td></tr>';
+  // monta tbody
+  for (const d of finalFiltrados) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${d.nome || '-'}</td>
+      <td class="matricula">${d.matricula || '-'}</td>
+      <td>${d.tipoCartao || '-'}</td>
+      <td>${d.numBordoDigicon || '-'}</td>
+      <td>${d.numBordoProdata || '-'}</td>
+      <td>${d.numMeiaViagem || '-'}</td>
+      <td>${d.motivo || '-'}</td>
+      <td>${d.matriculaEmprestimo || '-'}</td>
+      <td>${d.dataRetirada ? new Date(d.dataRetirada.seconds*1000).toLocaleDateString() : '-'}</td>
+      <td>${d.prazoDevolucao ? new Date(d.prazoDevolucao.seconds*1000).toLocaleDateString() : '-'}</td>
+      <td><button class="statusBtn" style="background:${d.status==='em aberto'?'#f5b041':'#2ecc71'}">${d.status||'-'}</button></td>
+    `;
+    tbody.appendChild(tr);
   }
 }
 
 /* ---------- Inicialização ---------- */
-document.addEventListener('DOMContentLoaded', async () => {
-  await atualizarEstoque();
+window.addEventListener('DOMContentLoaded', async () => {
   criarControles();
+  await atualizarEstoque();
   await carregarRelatorio();
-
-  // Optional: auto-refresh every minute (uncomment if desired)
-  // setInterval(async () => { await atualizarEstoque(); await carregarRelatorio(); }, 60 * 1000);
+  setInterval(atualizarEstoque, 60*1000); // atualiza estoque a cada 1min
 });
 </script>
 
 <footer class="footer">
-    Developed by Lucas L Custodio
+  © 2025 Recebedoria. Todos os direitos reservados.
 </footer>
 
 </body>
