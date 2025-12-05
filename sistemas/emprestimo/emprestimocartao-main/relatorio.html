@@ -1,669 +1,242 @@
 ﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Relatório de Empréstimos</title>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Cartões</title>
 
-<!-- Favicon -->
-<link rel="icon" href="favicon.ico" type="image/x-icon">
-<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            padding: 20px;
+        }
 
-<!-- Firebase SDKs (compat) -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+        .filtros {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
 
-<style>
-/* --- mantive seu estilo original e adicionei classes novas --- */
-body {
-    background-color: #121212;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: #e0e0e0;
-    margin: 0;
-    padding: 20px;
-}
-header {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 20px;
-}
-header img.logo { height: 50px; }
-header h1 { flex-grow:1; font-size: 1.5rem; color: #00ff7f; }
-header button {
-    padding:5px 10px; border-radius:5px; border:none;
-    cursor:pointer; background:#00ff7f; color:#111;
-}
-main { display: flex; gap: 20px; align-items:flex-start; }
-#estoque {
-    width: 260px; background: #1e1e1e;
-    padding: 15px; border-radius: 10px; color: #e0e0e0;
-    height: fit-content;
-}
-#estoque h2 { color: #00ff7f; font-size: 1.1rem; margin-bottom: 10px; }
-.cardEstoque {
-    background: #2a2a2a; border-radius: 8px;
-    padding: 10px; margin-bottom: 10px;
-}
-.cardEstoque h3 { margin: 0; font-size: 1rem; color: #00b894; }
-.cardEstoque p { margin: 3px 0; font-size: 0.9rem; }
+        .filtros label {
+            font-size: 14px;
+            font-weight: bold;
+        }
 
-.controls-bar {
-  display:flex;
-  gap:12px;
-  align-items:center;
-  margin-bottom:12px;
-  flex-wrap:wrap;
-}
+        .filtros select, .filtros input {
+            padding: 6px;
+            font-size: 14px;
+        }
 
-/* filtro mes + tipos + numero + counts */
-#monthSelect {
-  padding:8px 10px;
-  border-radius:8px;
-  background:#222;
-  color:#fff;
-  border:1px solid rgba(255,255,255,0.06);
-  font-weight:600;
-}
-.filterTipoBtn {
-  padding:6px 10px;
-  border-radius:8px;
-  border:1px solid rgba(255,255,255,0.06);
-  background:#222;
-  color:#fff;
-  cursor:pointer;
-  font-weight:700;
-}
-#btnTodosTipos {
-  background:#00ff7f;
-  color:#111;
-  font-weight:800;
-  border: none;
-}
+        .indice-box {
+            padding: 6px 10px;
+            background: #ddd;
+            cursor: pointer;
+            border-radius: 6px;
+            user-select: none;
+        }
 
-#cardNumberFilter {
-  width:72px;
-  padding:6px 8px;
-  border-radius:8px;
-  background:#222;
-  color:#fff;
-  border:1px solid rgba(255,255,255,0.06);
-}
+        .indice-box.ativo {
+            background: #4CAF50;
+            color: white;
+            font-weight: bold;
+        }
 
-.count-filters { display:flex; gap:8px; align-items:center; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            margin-bottom: 80px; /* espaço extra no final */
+        }
 
-.count-filters label { font-size:0.9rem; display:flex; gap:6px; align-items:center; }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+            text-align: center;
+        }
 
-.legend {
-  margin-left:auto;
-  display:flex;
-  gap:10px;
-  align-items:center;
-  font-size:0.9rem;
-}
-.legend .item { display:flex; gap:8px; align-items:center; }
-
-.table-wrap { flex:1; }
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: #1f1f1f;
-    border-radius: 8px;
-    overflow: hidden;
-}
-th, td {
-    padding: 6px 8px;
-    text-align: left;
-    border-bottom: 1px solid #333;
-    font-size: 0.95rem;
-    color: #e0e0e0;
-    vertical-align: middle;
-}
-th { background-color: #00ff7f; color: #111; }
-tr:hover { background-color: #333; }
-.statusBtn {
-    padding:5px 18px; border:none; border-radius:5px;
-    cursor:pointer; color:#111; font-weight: bold;
-}
-
-/* matrícula cell with badges container */
-td.matricula {
-  font-weight: bold;
-  text-align: center;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:6px;
-  padding-top:10px;
-  padding-bottom:10px;
-}
-
-/* badge small */
-.badge-type {
-  padding:4px 8px;
-  border-radius:999px;
-  font-size:0.78rem;
-  font-weight:700;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.45);
-}
-
-/* legend swatches */
-.legend-swatch {
-  width:16px; height:12px; border-radius:4px; display:inline-block;
-}
-
-/* bottom spacer so list not cut */
-.table-bottom-spacer { height: 70px; }
-
-/* footer */
-.footer { margin-top:18px; color:#888; text-align:center; }
-
-/* responsive tweaks */
-@media(max-width:900px){
-  main { flex-direction:column; }
-  #estoque { width:100%; }
-}
-</style>
+        th {
+            background: #eee;
+        }
+    </style>
 </head>
 <body>
 
-<header>
-    <img src="logo.png" alt="Logo" class="logo">
-    <h1>Relatório de Empréstimos</h1>
-    <button onclick="window.location.href='index.html'">🏠 Voltar</button>
-</header>
+    <h2>Relatório de Retiradas</h2>
 
-<main>
-    <aside id="estoque">
-        <h2>📦 Estoque</h2>
-        <div id="estoqueConteudo">Carregando...</div>
-    </aside>
+    <!-- 🔥 FILTROS -->
+    <div class="filtros">
 
-    <div class="table-wrap">
-        <!-- controles dinâmicos serão inseridos pelo script -->
-        <div id="controlsHolder"></div>
+        <!-- Filtro por Tipo -->
+        <div>
+            <label>Tipo:</label><br>
+            <select id="filtroTipo">
+                <option value="">Todos</option>
+                <option value="DIGICON">DIGICON</option>
+                <option value="PRODATA">PRODATA</option>
+                <option value="MEIA">MEIA</option>
+            </select>
+        </div>
 
-        <table id="relatorioTable">
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Matrícula</th>
-                    <th>Tipo Cartão</th>
-                    <th>N° Bordo Digicon</th>
-                    <th>N° Bordo Prodata</th>
-                    <th>N° Meia Viagem</th>
-                    <th>Motivo</th>
-                    <th>Matrícula Empréstimo</th>
-                    <th>Data Retirada</th>
-                    <th>Prazo Devolução</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody id="relatorioBody"></tbody>
-        </table>
+        <!-- Filtro por Número do Cartão -->
+        <div>
+            <label>Número do Cartão:</label><br>
+            <input type="number" id="filtroNumero" placeholder="ex: 3">
+        </div>
 
-        <!-- espaçador para não cortar a lista -->
-        <div class="table-bottom-spacer" aria-hidden="true"></div>
+        <!-- 🔥 NOVO – Filtro por MATRÍCULA -->
+        <div>
+            <label>Matrícula:</label><br>
+            <input type="number" id="filtroMatricula" placeholder="ex: 9123">
+        </div>
+
+        <!-- 🔥 NOVO – Índice como BOTÃO -->
+        <div>
+            <label>Quantidade Retiradas:</label><br>
+
+            <div style="display:flex; gap:8px;">
+                <div class="indice-box ativo" data-indice="1">1+</div>
+                <div class="indice-box" data-indice="2">2+</div>
+                <div class="indice-box" data-indice="3">3+</div>
+                <div class="indice-box" data-indice="4">4+</div>
+            </div>
+        </div>
+
     </div>
-</main>
 
-<script src="firebaseConfig.js"></script>
-<script>
-/* ---------- atualizarEstoque (mantive lógica original) ---------- */
-async function atualizarEstoque() {
-  const estoqueDiv = document.getElementById("estoqueConteudo");
-  estoqueDiv.innerHTML = "Atualizando...";
+    <!-- Tabela -->
+    <table id="tabelaRegistros">
+        <thead>
+            <tr>
+                <th>Motorista</th>
+                <th>Matrícula</th>
+                <th>Tipo</th>
+                <th>Número</th>
+                <th>Data</th>
+                <th>Quantidade Retiradas</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
 
-  const total = { digicon: 10, prodata: 10, meiaViagem: 10 };
-  const emprestados = { digicon: [], prodata: [], meiaViagem: [] };
+    <!-- FIREBASE -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
-  const snapshot = await db.collection("emprestimos")
-    .where("status", "==", "em aberto")
-    .get();
+    <script>
+        // CONFIG FIREBASE (use o seu)
+        const firebaseConfig = {
+            apiKey: "...",
+            authDomain: "...",
+            projectId: "...",
+        };
 
-  snapshot.forEach(doc => {
-    const data = doc.data();
-    const tipo = (data.tipoCartao || '').toString().toLowerCase();
-    if (tipo === "digicon" && data.numBordoDigicon) emprestados.digicon.push(Number(data.numBordoDigicon));
-    if (tipo === "prodata" && data.numBordoProdata) emprestados.prodata.push(Number(data.numBordoProdata));
-    if (data.numMeiaViagem) emprestados.meiaViagem.push(Number(data.numMeiaViagem));
-  });
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-  function gerarLista(tipo) {
-    const chave = tipo;
-    const todos = Array.from({ length: total[chave] }, (_, i) => i + 1);
-    const disponiveis = todos.filter(n => !emprestados[chave].includes(n));
-    const titulo = chave === 'digicon' ? 'Bordo Digicon' : chave === 'prodata' ? 'Bordo Prodata' : 'Meia Viagem';
-    return `
-      <div class="cardEstoque">
-        <h3>${titulo}</h3>
-        <p><b>Qtd. Disponível:</b> ${disponiveis.length}</p>
-        <p><b>Qtd. Emprestado:</b> ${emprestados[chave].length}</p>
-        <p><b>N° Disponíveis:</b> ${disponiveis.join(', ') || '-'}</p>
-        <p><b>N° Emprestados:</b> ${emprestados[chave].join(', ') || '-'}</p>
-      </div>`;
-  }
+        // Estado do índice
+        let indiceMinimo = 1;
 
-  estoqueDiv.innerHTML =
-    gerarLista("digicon") +
-    gerarLista("prodata") +
-    gerarLista("meiaViagem");
-}
+        document.querySelectorAll(".indice-box").forEach(btn => {
+            btn.addEventListener("click", () => {
+                document.querySelectorAll(".indice-box").forEach(b => b.classList.remove("ativo"));
+                btn.classList.add("ativo");
+                indiceMinimo = Number(btn.dataset.indice);
+                carregarRegistros();
+            });
+        });
 
-/* ---------- Helpers para mês ---------- */
-function getMonthId(date = new Date()) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  return `${y}-${m}`; // YYYY-MM
-}
+        // Carregar registros do Firestore
+        let todosRegistros = [];
 
-function monthIdToRange(monthId) {
-  const [y, m] = monthId.split('-').map(Number);
-  const first = new Date(y, m - 1, 1, 0, 0, 0);
-  const last = new Date(y, m, 0, 23, 59, 59, 999);
-  return { start: first, end: last };
-}
+        async function carregarRegistros() {
+            const tabela = document.querySelector("#tabelaRegistros tbody");
+            tabela.innerHTML = "<tr><td colspan='6'>Carregando...</td></tr>";
 
-function formatMonthLabel(monthId) {
-  const [y, m] = monthId.split('-').map(Number);
-  const d = new Date(y, m - 1, 1);
-  return d.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
-}
+            const filtroTipo = document.getElementById("filtroTipo").value;
+            const filtroNumero = document.getElementById("filtroNumero").value.trim();
+            const filtroMatricula = document.getElementById("filtroMatricula").value.trim();
 
-/* ---------- Cria controles dinâmicos (mês, tipo, legenda, número, counts) ---------- */
-function criarControles() {
-  const container = document.createElement('div');
-  container.className = 'controls-bar';
+            let dadosFiltrados = [...todosRegistros];
 
-  // Month select
-  const monthSelect = document.createElement('select');
-  monthSelect.id = 'monthSelect';
-  monthSelect.title = 'Selecionar mês';
-  // Preencher últimos 12 meses (inclui atual)
-  const current = new Date();
-  for (let i = 0; i < 12; i++) {
-    const d = new Date(current.getFullYear(), current.getMonth() - i, 1);
-    const id = getMonthId(d);
-    const opt = document.createElement('option');
-    opt.value = id;
-    opt.textContent = formatMonthLabel(id);
-    monthSelect.appendChild(opt);
-  }
+            // 🌐 FILTRO TIPO
+            if (filtroTipo !== "") {
+                dadosFiltrados = dadosFiltrados.filter(r => r.tipoCartao === filtroTipo);
+            }
 
-  // Toggle buttons for types
-  const toggles = document.createElement('div');
-  toggles.style.display = 'flex';
-  toggles.style.gap = '8px';
-  toggles.style.alignItems = 'center';
+            // 🌐 FILTRO NÚMERO
+            if (filtroNumero !== "") {
+                dadosFiltrados = dadosFiltrados.filter(r => 
+                    r.num === filtroNumero
+                );
+            }
 
-  ['digicon', 'prodata', 'meia'].forEach(key => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'filterTipoBtn';
-    btn.dataset.tipo = key;
-    btn.textContent = key === 'digicon' ? 'Digicon' : key === 'prodata' ? 'Prodata' : 'Meia';
-    btn.style.padding = '6px 10px';
-    btn.style.borderRadius = '8px';
-    btn.style.border = '1px solid rgba(255,255,255,0.06)';
-    btn.style.background = '#222';
-    btn.style.color = '#fff';
-    btn.style.cursor = 'pointer';
-    btn.dataset.active = 'true'; // default active
-    toggles.appendChild(btn);
-  });
+            // 🌐 FILTRO MATRÍCULA
+            if (filtroMatricula !== "") {
+                dadosFiltrados = dadosFiltrados.filter(r =>
+                    r.matriculaMotorista.includes(filtroMatricula)
+                );
+            }
 
-  // "Todos" toggle
-  const btnTodos = document.createElement('button');
-  btnTodos.type = 'button';
-  btnTodos.id = 'btnTodosTipos';
-  btnTodos.textContent = 'Todos';
-  btnTodos.style.padding = '6px 10px';
-  btnTodos.style.borderRadius = '8px';
-  btnTodos.style.border = '1px solid rgba(255,255,255,0.06)';
-  btnTodos.style.background = '#00ff7f';
-  btnTodos.style.color = '#111';
-  btnTodos.style.cursor = 'pointer';
-  toggles.insertBefore(btnTodos, toggles.firstChild);
+            // 🌐 AGRUPAR por motorista para contar quantidade de retiradas
+            const contagem = {};
+            dadosFiltrados.forEach(r => {
+                if (!contagem[r.matriculaMotorista]) contagem[r.matriculaMotorista] = 0;
+                contagem[r.matriculaMotorista]++;
+            });
 
-  // Card number filter (small input)
-  const cardNumberFilter = document.createElement('input');
-  cardNumberFilter.type = 'number';
-  cardNumberFilter.id = 'cardNumberFilter';
-  cardNumberFilter.placeholder = 'Nº card';
-  cardNumberFilter.title = 'Filtrar por número do cartão (ex: 3)';
+            // 🌐 APLICAR INDICE (ex: 2+ → só quem retirou 2 ou mais)
+            dadosFiltrados = dadosFiltrados.filter(r =>
+                contagem[r.matriculaMotorista] >= indiceMinimo
+            );
 
-  // Count filters (checkboxes 1,2,3,4+)
-  const countFilters = document.createElement('div');
-  countFilters.className = 'count-filters';
-  countFilters.title = 'Filtrar por quantidade de cartões retirados pelo motorista';
+            // 🌐 EXIBIR TABELA
+            tabela.innerHTML = "";
 
-  ['1','2','3','4+'].forEach(lbl => {
-    const lab = document.createElement('label');
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.value = lbl;
-    cb.checked = true; // default all checked
-    cb.className = 'countCheckbox';
-    lab.appendChild(cb);
-    const span = document.createElement('span');
-    span.textContent = lbl;
-    lab.appendChild(span);
-    countFilters.appendChild(lab);
-  });
+            dadosFiltrados.forEach(r => {
+                tabela.innerHTML += `
+                    <tr>
+                        <td>${r.nomeMotorista}</td>
+                        <td>${r.matriculaMotorista}</td>
+                        <td>${r.tipoCartao}</td>
+                        <td>${r.num}</td>
+                        <td>${r.dataRetirada}</td>
+                        <td>${contagem[r.matriculaMotorista]}</td>
+                    </tr>
+                `;
+            });
 
-  // Legend / Índice cores
-  const legend = document.createElement('div');
-  legend.className = 'legend';
-
-  const thresholds = [
-    { label: '1', color: '#bcd9a8' },
-    { label: '2', color: '#f9e79f' },
-    { label: '3', color: '#f5b041' },
-    { label: '4+', color: '#e74c3c' }
-  ];
-  thresholds.forEach(t => {
-    const item = document.createElement('div');
-    item.className = 'item';
-    const sw = document.createElement('span');
-    sw.className = 'legend-swatch';
-    sw.style.background = t.color;
-    const lbl = document.createElement('span');
-    lbl.textContent = t.label;
-    item.appendChild(sw);
-    item.appendChild(lbl);
-    legend.appendChild(item);
-  });
-
-  container.appendChild(monthSelect);
-  container.appendChild(toggles);
-  container.appendChild(cardNumberFilter);
-  container.appendChild(countFilters);
-  container.appendChild(legend);
-
-  // Inserir antes da tabela
-  const tableWrap = document.querySelector('.table-wrap');
-  const holder = document.getElementById('controlsHolder');
-  holder.appendChild(container);
-
-  // Event handlers
-  monthSelect.addEventListener('change', () => {
-    carregarRelatorio();
-  });
-
-  toggles.querySelectorAll('.filterTipoBtn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      btn.dataset.active = btn.dataset.active === 'true' ? 'false' : 'true';
-      btn.style.opacity = btn.dataset.active === 'true' ? '1' : '0.45';
-      const all = Array.from(toggles.querySelectorAll('.filterTipoBtn'));
-      if (all.every(b => b.dataset.active === 'false')) {
-        all.forEach(b => { b.dataset.active = 'true'; b.style.opacity = '1'; });
-      }
-      carregarRelatorio();
-    });
-  });
-
-  btnTodos.addEventListener('click', () => {
-    const all = Array.from(toggles.querySelectorAll('.filterTipoBtn'));
-    const anyInactive = all.some(b => b.dataset.active === 'false');
-    if (anyInactive) {
-      all.forEach(b => { b.dataset.active = 'true'; b.style.opacity = '1'; });
-    } else {
-      // toggle off then on to ensure visual feedback (but effectively keep all on)
-      all.forEach(b => { b.dataset.active = 'false'; b.style.opacity = '0.45'; });
-      all.forEach(b => { b.dataset.active = 'true'; b.style.opacity = '1'; });
-    }
-    carregarRelatorio();
-  });
-
-  // card number listener
-  cardNumberFilter.addEventListener('input', () => {
-    // small debounce not needed; simple immediate refresh
-    carregarRelatorio();
-  });
-
-  // count filters listener
-  countFilters.querySelectorAll('input.countCheckbox').forEach(cb => {
-    cb.addEventListener('change', () => {
-      // if none checked, re-check all (keep behaviour sane)
-      const all = Array.from(countFilters.querySelectorAll('input.countCheckbox'));
-      if (all.every(c => !c.checked)) all.forEach(c => c.checked = true);
-      carregarRelatorio();
-    });
-  });
-
-  // Set default month to current
-  monthSelect.value = getMonthId(new Date());
-}
-
-/* ---------- Lê dados e monta tabela filtrada pelo mês e tipo, por número e por counts ---------- */
-async function carregarRelatorio() {
-  const tbody = document.getElementById('relatorioBody');
-  tbody.innerHTML = '';
-  const table = document.getElementById('relatorioTable');
-
-  const monthSelect = document.getElementById('monthSelect');
-  const selectedMonth = monthSelect ? monthSelect.value : getMonthId(new Date());
-  const { start, end } = monthIdToRange(selectedMonth);
-
-  const activeTipos = Array.from(document.querySelectorAll('.filterTipoBtn'))
-    .filter(b => b.dataset.active === 'true')
-    .map(b => b.dataset.tipo); // ['digicon','prodata','meia']
-
-  // get selected counts
-  const selectedCounts = Array.from(document.querySelectorAll('.countCheckbox'))
-    .filter(cb => cb.checked)
-    .map(cb => cb.value); // e.g. ['1','2','3','4+']
-
-  const cardNumberValue = (document.getElementById('cardNumberFilter')?.value || '').trim();
-
-  const counts = {}; // counts[matricula] = { digicon, prodata, meia }
-  const rows = []; // all rows in month & active types
-
-  try {
-    const snapshot = await db.collection('emprestimos').orderBy('timestamp','desc').get();
-
-    snapshot.forEach(docSnap => {
-      const data = docSnap.data();
-      let docDate = null;
-      if (data.timestamp && data.timestamp.toDate) {
-        docDate = data.timestamp.toDate();
-      } else if (data.dataRetirada) {
-        const parts = data.dataRetirada.split(' ')[0].split('/');
-        if (parts.length === 3) {
-          docDate = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+            if (dadosFiltrados.length === 0) {
+                tabela.innerHTML = "<tr><td colspan='6'>Nenhum registro encontrado.</td></tr>";
+            }
         }
-      }
-      if (!docDate) return;
 
-      if (docDate < start || docDate > end) return;
+        // Carregar Firestore uma vez
+        async function iniciar() {
+            const snap = await db.collection("emprestimos").get();
 
-      const tipoRaw = (data.tipoCartao || '').toString().toLowerCase();
-      const tipo = tipoRaw.includes('digicon') ? 'digicon' : tipoRaw.includes('prodata') ? 'prodata' : (tipoRaw.includes('meia') ? 'meia' : tipoRaw);
+            todosRegistros = snap.docs.map(doc => {
+                const d = doc.data();
+                return {
+                    nomeMotorista: d.nomeMotorista || "",
+                    matriculaMotorista: d.matriculaMotorista || "",
+                    tipoCartao: d.tipoCartao || "",
+                    num: d.numBordoDigicon || d.numBordoProdata || d.numMeiaViagem || "",
+                    dataRetirada: d.dataRetirada || ""
+                };
+            });
 
-      // ignore rows whose tipo is not one of the activeTipos
-      if (!activeTipos.includes(tipo)) return;
+            carregarRegistros();
+        }
 
-      const mat = data.matriculaMotorista || data.matricula || '---';
-      if (!counts[mat]) counts[mat] = { digicon: 0, prodata: 0, meia: 0 };
-      if (tipo === 'digicon') counts[mat].digicon += 1;
-      if (tipo === 'prodata') counts[mat].prodata += 1;
-      if (tipo === 'meia') counts[mat].meia += 1;
+        iniciar();
 
-      rows.push({ id: docSnap.id, data, tipo, docDate });
-    });
-
-    // If cardNumberValue is set, find matriculas that had that card number (for any active type)
-    const matriculasComCard = new Set();
-    if (cardNumberValue !== '') {
-      const numFilter = cardNumberValue;
-      for (const r of rows) {
-        const d = r.data;
-        const tipo = r.tipo;
-        if (tipo === 'digicon' && d.numBordoDigicon && d.numBordoDigicon.toString() === numFilter) matriculasComCard.add(d.matriculaMotorista || d.matricula || '---');
-        if (tipo === 'prodata' && d.numBordoProdata && d.numBordoProdata.toString() === numFilter) matriculasComCard.add(d.matriculaMotorista || d.matricula || '---');
-        if (tipo === 'meia' && d.numMeiaViagem && d.numMeiaViagem.toString() === numFilter) matriculasComCard.add(d.matriculaMotorista || d.matricula || '---');
-      }
-    }
-
-    // Now render rows but apply two filters:
-    // 1) matricula total (for activeTipos) must match selectedCounts
-    // 2) if cardNumberValue provided -> only matriculas that appear in matriculasComCard are shown (and all their rows)
-    // To support (2) showing all rows of those matriculas, we will first compute which matriculas pass the count filter and card filter, then render rows for those matriculas.
-
-    // compute matriculas that pass count filter
-    const matriculasQuePassam = new Set();
-    for (const mat in counts) {
-      const c = counts[mat];
-      const totalForActive = (activeTipos.includes('digicon') ? c.digicon : 0)
-                           + (activeTipos.includes('prodata') ? c.prodata : 0)
-                           + (activeTipos.includes('meia') ? c.meia : 0);
-
-      // map numeric total to label
-      let label = totalForActive.toString();
-      if (totalForActive >= 4) label = '4+';
-      // include if selectedCounts contains label
-      if (selectedCounts.includes(label)) {
-        matriculasQuePassam.add(mat);
-      }
-    }
-
-    // if cardNumberValue is set, intersect with matriculasComCard
-    if (cardNumberValue !== '') {
-      for (const mat of Array.from(matriculasQuePassam)) {
-        if (!matriculasComCard.has(mat)) matriculasQuePassam.delete(mat);
-      }
-    }
-
-    // render rows only for matriculasQuePassam
-    for (const r of rows) {
-      const d = r.data;
-      const matKey = d.matriculaMotorista || d.matricula || '---';
-      if (!matriculasQuePassam.has(matKey)) continue;
-
-      const tr = document.createElement('tr');
-
-      tr.innerHTML = `
-        <td>${d.nomeMotorista || ''}</td>
-        <td class="matricula">${matKey}</td>
-        <td>${d.tipoCartao || ''}</td>
-        <td>${d.numBordoDigicon || '-'}</td>
-        <td>${d.numBordoProdata || '-'}</td>
-        <td>${d.numMeiaViagem || '-'}</td>
-        <td>${d.motivo || ''}</td>
-        <td>${d.matriculaEmpresto || ''}</td>
-        <td>${d.dataRetirada || ''}</td>
-        <td>${d.prazoDevolucao || '-'}</td>
-        <td>
-          <button class="statusBtn" style="background:${d.status === 'em aberto' ? '#ff5555' : '#55ff55'};">
-            ${d.status}
-          </button>
-        </td>
-      `;
-
-      const statusBtn = tr.querySelector('.statusBtn');
-      statusBtn.addEventListener('click', async () => {
-        const novoStatus = d.status === 'em aberto' ? 'resolvido' : 'em aberto';
-        await db.collection('emprestimos').doc(r.id).update({ status: novoStatus });
-        d.status = novoStatus;
-        statusBtn.textContent = novoStatus;
-        statusBtn.style.background = novoStatus === 'em aberto' ? '#ff5555' : '#55ff55';
-      });
-
-      // badges (counts for that matricula)
-      const tdMat = tr.querySelector('td.matricula');
-      const matCounts = counts[matKey] || { digicon: 0, prodata: 0, meia: 0 };
-
-      const badgesWrap = document.createElement('div');
-      badgesWrap.style.display = 'flex';
-      badgesWrap.style.gap = '6px';
-      badgesWrap.style.justifyContent = 'center';
-      badgesWrap.style.marginTop = '4px';
-
-      const createBadge = (label, count, color, className) => {
-        const b = document.createElement('span');
-        b.className = `badge-type ${className}`;
-        b.textContent = `${label}: ${count}`;
-        b.style.padding = '4px 8px';
-        b.style.borderRadius = '999px';
-        b.style.fontSize = '0.75rem';
-        b.style.fontWeight = '700';
-        b.style.background = color;
-        b.style.color = '#111';
-        b.style.boxShadow = '0 2px 6px rgba(0,0,0,0.4)';
-        return b;
-      };
-
-      const colorDigicon = matCounts.digicon >= 4 ? '#e74c3c' : matCounts.digicon === 3 ? '#f5b041' : matCounts.digicon === 2 ? '#f9e79f' : '#bcd9a8';
-      const colorProdata = matCounts.prodata >= 4 ? '#ff6b6b' : matCounts.prodata === 3 ? '#ffb86b' : matCounts.prodata === 2 ? '#ffeaa7' : '#a0e7e5';
-      const colorMeia = matCounts.meia >= 4 ? '#d980fa' : matCounts.meia === 3 ? '#c77dff' : matCounts.meia === 2 ? '#e7c6ff' : '#d1c7ff';
-
-      const showZeros = false;
-
-      if (showZeros ? true : matCounts.digicon > 0) {
-        badgesWrap.appendChild(createBadge('Dig', matCounts.digicon, colorDigicon, 'badge-dig'));
-      }
-      if (showZeros ? true : matCounts.prodata > 0) {
-        badgesWrap.appendChild(createBadge('Pro', matCounts.prodata, colorProdata, 'badge-pro'));
-      }
-      if (showZeros ? true : matCounts.meia > 0) {
-        badgesWrap.appendChild(createBadge('Meia', matCounts.meia, colorMeia, 'badge-meia'));
-      }
-
-      tdMat.appendChild(badgesWrap);
-
-      tbody.appendChild(tr);
-    }
-
-    // color background of matricula based on month counts
-    Array.from(document.querySelectorAll('td.matricula')).forEach(td => {
-      const mat = td.childNodes[0] ? td.childNodes[0].textContent.trim() : td.textContent.trim();
-      const c = counts[mat] || { digicon: 0, prodata: 0, meia: 0 };
-      const total = (activeTipos.includes('digicon') ? c.digicon : 0)
-                  + (activeTipos.includes('prodata') ? c.prodata : 0)
-                  + (activeTipos.includes('meia') ? c.meia : 0);
-
-      if (total === 2) {
-        td.style.backgroundColor = "#f9e79f";
-        td.style.color = "#000";
-        td.style.fontWeight = "bold";
-      } else if (total === 3) {
-        td.style.backgroundColor = "#f5b041";
-        td.style.color = "#000";
-        td.style.fontWeight = "bold";
-      } else if (total >= 4) {
-        td.style.backgroundColor = "#e74c3c";
-        td.style.color = "#fff";
-        td.style.fontWeight = "bold";
-      } else {
-        td.style.backgroundColor = "transparent";
-        td.style.color = "#e0e0e0";
-        td.style.fontWeight = "normal";
-      }
-    });
-
-  } catch (err) {
-    console.error('Erro ao carregar relatório:', err);
-    alert('Erro ao carregar relatório. Veja o console.');
-  }
-}
-
-/* ---------- Inicialização ---------- */
-document.addEventListener('DOMContentLoaded', async () => {
-  await atualizarEstoque();
-  criarControles();
-  await carregarRelatorio();
-
-  // Optional: auto-refresh every minute (uncomment if desired)
-  // setInterval(async () => { await atualizarEstoque(); await carregarRelatorio(); }, 60 * 1000);
-});
-</script>
-
-<footer class="footer">
-    Developed by Lucas L Custodio
-</footer>
+        // Filtros ativados automaticamente
+        document.querySelectorAll("#filtroTipo, #filtroNumero, #filtroMatricula")
+            .forEach(el => el.addEventListener("input", carregarRegistros));
+    </script>
 
 </body>
 </html>
