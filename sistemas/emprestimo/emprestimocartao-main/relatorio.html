@@ -15,9 +15,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
-<!-- SheetJS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.20.9/xlsx.full.min.js"></script>
-
 <style>
 /* --- mantive seu estilo original e adicionei classes novas --- */
 body {
@@ -58,9 +55,10 @@ main { display: flex; gap: 20px; align-items:flex-start; }
   gap:12px;
   align-items:center;
   margin-bottom:12px;
+  flex-wrap:wrap;
 }
 
-/* filtro mes + tipos */
+/* filtro mes + tipos + numero + counts */
 #monthSelect {
   padding:8px 10px;
   border-radius:8px;
@@ -84,6 +82,19 @@ main { display: flex; gap: 20px; align-items:flex-start; }
   font-weight:800;
   border: none;
 }
+
+#cardNumberFilter {
+  width:72px;
+  padding:6px 8px;
+  border-radius:8px;
+  background:#222;
+  color:#fff;
+  border:1px solid rgba(255,255,255,0.06);
+}
+
+.count-filters { display:flex; gap:8px; align-items:center; }
+
+.count-filters label { font-size:0.9rem; display:flex; gap:6px; align-items:center; }
 
 .legend {
   margin-left:auto;
@@ -117,10 +128,6 @@ tr:hover { background-color: #333; }
     padding:5px 18px; border:none; border-radius:5px;
     cursor:pointer; color:#111; font-weight: bold;
 }
-.exportBtn {
-    margin-bottom:10px; padding:8px 15px;
-    background:#0984e3; color:#fff; border:none; border-radius:5px; cursor:pointer;
-}
 
 /* matrícula cell with badges container */
 td.matricula {
@@ -143,15 +150,13 @@ td.matricula {
   box-shadow: 0 2px 6px rgba(0,0,0,0.45);
 }
 
-/* color thresholds (if you want to override) */
-.badge-dig { color:#111; }
-.badge-pro { color:#111; }
-.badge-meia { color:#111; }
-
 /* legend swatches */
 .legend-swatch {
   width:16px; height:12px; border-radius:4px; display:inline-block;
 }
+
+/* bottom spacer so list not cut */
+.table-bottom-spacer { height: 70px; }
 
 /* footer */
 .footer { margin-top:18px; color:#888; text-align:center; }
@@ -179,9 +184,7 @@ td.matricula {
 
     <div class="table-wrap">
         <!-- controles dinâmicos serão inseridos pelo script -->
-        <div style="display:flex; justify-content:flex-end; margin-bottom:8px;">
-          <button class="exportBtn" id="exportExcelBtn">📥 Exportar Excel</button>
-        </div>
+        <div id="controlsHolder"></div>
 
         <table id="relatorioTable">
             <thead>
@@ -201,6 +204,9 @@ td.matricula {
             </thead>
             <tbody id="relatorioBody"></tbody>
         </table>
+
+        <!-- espaçador para não cortar a lista -->
+        <div class="table-bottom-spacer" aria-hidden="true"></div>
     </div>
 </main>
 
@@ -267,7 +273,7 @@ function formatMonthLabel(monthId) {
   return d.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
 }
 
-/* ---------- Cria controles dinâmicos (mês, tipo, legenda) ---------- */
+/* ---------- Cria controles dinâmicos (mês, tipo, legenda, número, counts) ---------- */
 function criarControles() {
   const container = document.createElement('div');
   container.className = 'controls-bar';
@@ -322,6 +328,32 @@ function criarControles() {
   btnTodos.style.cursor = 'pointer';
   toggles.insertBefore(btnTodos, toggles.firstChild);
 
+  // Card number filter (small input)
+  const cardNumberFilter = document.createElement('input');
+  cardNumberFilter.type = 'number';
+  cardNumberFilter.id = 'cardNumberFilter';
+  cardNumberFilter.placeholder = 'Nº card';
+  cardNumberFilter.title = 'Filtrar por número do cartão (ex: 3)';
+
+  // Count filters (checkboxes 1,2,3,4+)
+  const countFilters = document.createElement('div');
+  countFilters.className = 'count-filters';
+  countFilters.title = 'Filtrar por quantidade de cartões retirados pelo motorista';
+
+  ['1','2','3','4+'].forEach(lbl => {
+    const lab = document.createElement('label');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.value = lbl;
+    cb.checked = true; // default all checked
+    cb.className = 'countCheckbox';
+    lab.appendChild(cb);
+    const span = document.createElement('span');
+    span.textContent = lbl;
+    lab.appendChild(span);
+    countFilters.appendChild(lab);
+  });
+
   // Legend / Índice cores
   const legend = document.createElement('div');
   legend.className = 'legend';
@@ -347,11 +379,14 @@ function criarControles() {
 
   container.appendChild(monthSelect);
   container.appendChild(toggles);
+  container.appendChild(cardNumberFilter);
+  container.appendChild(countFilters);
   container.appendChild(legend);
 
   // Inserir antes da tabela
   const tableWrap = document.querySelector('.table-wrap');
-  tableWrap.insertBefore(container, tableWrap.firstChild);
+  const holder = document.getElementById('controlsHolder');
+  holder.appendChild(container);
 
   // Event handlers
   monthSelect.addEventListener('change', () => {
@@ -376,18 +411,34 @@ function criarControles() {
     if (anyInactive) {
       all.forEach(b => { b.dataset.active = 'true'; b.style.opacity = '1'; });
     } else {
-      // keep at least one active -> here we toggle all to off then immediately reset to on to avoid blank
+      // toggle off then on to ensure visual feedback (but effectively keep all on)
       all.forEach(b => { b.dataset.active = 'false'; b.style.opacity = '0.45'; });
       all.forEach(b => { b.dataset.active = 'true'; b.style.opacity = '1'; });
     }
     carregarRelatorio();
   });
 
+  // card number listener
+  cardNumberFilter.addEventListener('input', () => {
+    // small debounce not needed; simple immediate refresh
+    carregarRelatorio();
+  });
+
+  // count filters listener
+  countFilters.querySelectorAll('input.countCheckbox').forEach(cb => {
+    cb.addEventListener('change', () => {
+      // if none checked, re-check all (keep behaviour sane)
+      const all = Array.from(countFilters.querySelectorAll('input.countCheckbox'));
+      if (all.every(c => !c.checked)) all.forEach(c => c.checked = true);
+      carregarRelatorio();
+    });
+  });
+
   // Set default month to current
   monthSelect.value = getMonthId(new Date());
 }
 
-/* ---------- Lê dados e monta tabela filtrada pelo mês e tipo ---------- */
+/* ---------- Lê dados e monta tabela filtrada pelo mês e tipo, por número e por counts ---------- */
 async function carregarRelatorio() {
   const tbody = document.getElementById('relatorioBody');
   tbody.innerHTML = '';
@@ -401,8 +452,15 @@ async function carregarRelatorio() {
     .filter(b => b.dataset.active === 'true')
     .map(b => b.dataset.tipo); // ['digicon','prodata','meia']
 
+  // get selected counts
+  const selectedCounts = Array.from(document.querySelectorAll('.countCheckbox'))
+    .filter(cb => cb.checked)
+    .map(cb => cb.value); // e.g. ['1','2','3','4+']
+
+  const cardNumberValue = (document.getElementById('cardNumberFilter')?.value || '').trim();
+
   const counts = {}; // counts[matricula] = { digicon, prodata, meia }
-  const rows = [];
+  const rows = []; // all rows in month & active types
 
   try {
     const snapshot = await db.collection('emprestimos').orderBy('timestamp','desc').get();
@@ -425,13 +483,8 @@ async function carregarRelatorio() {
       const tipoRaw = (data.tipoCartao || '').toString().toLowerCase();
       const tipo = tipoRaw.includes('digicon') ? 'digicon' : tipoRaw.includes('prodata') ? 'prodata' : (tipoRaw.includes('meia') ? 'meia' : tipoRaw);
 
-      const hasActiveType = (
-        (tipo === 'digicon' && activeTipos.includes('digicon')) ||
-        (tipo === 'prodata' && activeTipos.includes('prodata')) ||
-        (tipo === 'meia' && activeTipos.includes('meia'))
-      );
-
-      if (!hasActiveType) return;
+      // ignore rows whose tipo is not one of the activeTipos
+      if (!activeTipos.includes(tipo)) return;
 
       const mat = data.matriculaMotorista || data.matricula || '---';
       if (!counts[mat]) counts[mat] = { digicon: 0, prodata: 0, meia: 0 };
@@ -442,13 +495,59 @@ async function carregarRelatorio() {
       rows.push({ id: docSnap.id, data, tipo, docDate });
     });
 
+    // If cardNumberValue is set, find matriculas that had that card number (for any active type)
+    const matriculasComCard = new Set();
+    if (cardNumberValue !== '') {
+      const numFilter = cardNumberValue;
+      for (const r of rows) {
+        const d = r.data;
+        const tipo = r.tipo;
+        if (tipo === 'digicon' && d.numBordoDigicon && d.numBordoDigicon.toString() === numFilter) matriculasComCard.add(d.matriculaMotorista || d.matricula || '---');
+        if (tipo === 'prodata' && d.numBordoProdata && d.numBordoProdata.toString() === numFilter) matriculasComCard.add(d.matriculaMotorista || d.matricula || '---');
+        if (tipo === 'meia' && d.numMeiaViagem && d.numMeiaViagem.toString() === numFilter) matriculasComCard.add(d.matriculaMotorista || d.matricula || '---');
+      }
+    }
+
+    // Now render rows but apply two filters:
+    // 1) matricula total (for activeTipos) must match selectedCounts
+    // 2) if cardNumberValue provided -> only matriculas that appear in matriculasComCard are shown (and all their rows)
+    // To support (2) showing all rows of those matriculas, we will first compute which matriculas pass the count filter and card filter, then render rows for those matriculas.
+
+    // compute matriculas that pass count filter
+    const matriculasQuePassam = new Set();
+    for (const mat in counts) {
+      const c = counts[mat];
+      const totalForActive = (activeTipos.includes('digicon') ? c.digicon : 0)
+                           + (activeTipos.includes('prodata') ? c.prodata : 0)
+                           + (activeTipos.includes('meia') ? c.meia : 0);
+
+      // map numeric total to label
+      let label = totalForActive.toString();
+      if (totalForActive >= 4) label = '4+';
+      // include if selectedCounts contains label
+      if (selectedCounts.includes(label)) {
+        matriculasQuePassam.add(mat);
+      }
+    }
+
+    // if cardNumberValue is set, intersect with matriculasComCard
+    if (cardNumberValue !== '') {
+      for (const mat of Array.from(matriculasQuePassam)) {
+        if (!matriculasComCard.has(mat)) matriculasQuePassam.delete(mat);
+      }
+    }
+
+    // render rows only for matriculasQuePassam
     for (const r of rows) {
       const d = r.data;
+      const matKey = d.matriculaMotorista || d.matricula || '---';
+      if (!matriculasQuePassam.has(matKey)) continue;
+
       const tr = document.createElement('tr');
 
       tr.innerHTML = `
         <td>${d.nomeMotorista || ''}</td>
-        <td class="matricula">${d.matriculaMotorista || ''}</td>
+        <td class="matricula">${matKey}</td>
         <td>${d.tipoCartao || ''}</td>
         <td>${d.numBordoDigicon || '-'}</td>
         <td>${d.numBordoProdata || '-'}</td>
@@ -473,9 +572,8 @@ async function carregarRelatorio() {
         statusBtn.style.background = novoStatus === 'em aberto' ? '#ff5555' : '#55ff55';
       });
 
-      // badges
+      // badges (counts for that matricula)
       const tdMat = tr.querySelector('td.matricula');
-      const matKey = tdMat.textContent;
       const matCounts = counts[matKey] || { digicon: 0, prodata: 0, meia: 0 };
 
       const badgesWrap = document.createElement('div');
@@ -523,7 +621,9 @@ async function carregarRelatorio() {
     Array.from(document.querySelectorAll('td.matricula')).forEach(td => {
       const mat = td.childNodes[0] ? td.childNodes[0].textContent.trim() : td.textContent.trim();
       const c = counts[mat] || { digicon: 0, prodata: 0, meia: 0 };
-      const total = c.digicon + c.prodata + c.meia;
+      const total = (activeTipos.includes('digicon') ? c.digicon : 0)
+                  + (activeTipos.includes('prodata') ? c.prodata : 0)
+                  + (activeTipos.includes('meia') ? c.meia : 0);
 
       if (total === 2) {
         td.style.backgroundColor = "#f9e79f";
@@ -556,19 +656,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   criarControles();
   await carregarRelatorio();
 
-  // export (mantive sua lógica)
-  const table = document.getElementById('relatorioTable');
-  const exportBtn = document.getElementById('exportExcelBtn');
-  exportBtn.addEventListener('click', () => {
-    if (typeof XLSX === 'undefined') {
-      alert('Erro: SheetJS não carregado!');
-      return;
-    }
-    const wb = XLSX.utils.table_to_book(table, { sheet: 'Relatorio' });
-    XLSX.writeFile(wb, `Relatorio_Emprestimos_${new Date().toLocaleDateString()}.xlsx`);
-  });
-
-  // opcional: auto-refresh (comentado)
+  // Optional: auto-refresh every minute (uncomment if desired)
   // setInterval(async () => { await atualizarEstoque(); await carregarRelatorio(); }, 60 * 1000);
 });
 </script>
