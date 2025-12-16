@@ -5,65 +5,128 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Relatório de Empréstimos</title>
 
-<link rel="stylesheet" href="style.css">
 <link rel="icon" href="favicon.ico">
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
 <style>
-/* ===== (CSS original mantido, sem alterações relevantes) ===== */
-body{background:#121212;color:#e0e0e0;font-family:'Segoe UI';margin:0;padding:20px}
-header{display:flex;align-items:center;gap:15px;margin-bottom:20px}
-header h1{flex-grow:1;color:#00ff7f}
-header button{background:#00ff7f;border:none;padding:6px 10px;border-radius:5px;cursor:pointer}
-main{display:flex;gap:20px;align-items:flex-start}
-.table-wrap{flex:1}
-table{width:100%;border-collapse:collapse;background:#1f1f1f}
-th,td{padding:6px 8px;border-bottom:1px solid #333}
-th{background:#00ff7f;color:#111}
-tr:hover{background:#333}
-.statusBtn{padding:5px 18px;border:none;border-radius:5px;font-weight:bold;cursor:pointer}
-.deleteBtn{background:none;border:none;color:#ff5555;font-size:1.1rem;cursor:pointer}
-.attention{margin-left:6px;animation:blink 1s infinite}
-@keyframes blink{0%,50%,100%{opacity:1}25%,75%{opacity:0}}
-.controls-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-.filterStatusBtn{padding:6px 10px;border-radius:8px;background:#222;color:#fff;border:1px solid #333;cursor:pointer}
-.filterStatusBtn.inactive{opacity:.4}
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:999}
-.modal{background:#222;padding:20px;border-radius:8px;text-align:center}
+body { background:#121212; color:#e0e0e0; font-family:Segoe UI; margin:0; padding:20px; }
+header { display:flex; gap:15px; align-items:center; margin-bottom:20px; }
+header img { height:50px; }
+header h1 { flex:1; color:#00ff7f; }
+header button { background:#00ff7f; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; }
+
+main { display:flex; gap:20px; }
+
+#estoque {
+  width:380px;
+  background:#1e1e1e;
+  padding:15px;
+  border-radius:10px;
+  max-height:650px;
+  overflow:auto;
+}
+
+.cardEstoque {
+  background:#2a2a2a;
+  padding:12px;
+  border-radius:8px;
+}
+
+.controls-bar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+
+select,input,button {
+  background:#222;
+  color:#fff;
+  border-radius:6px;
+  padding:6px 10px;
+  border:1px solid #333;
+}
+
+table { width:100%; border-collapse:collapse; background:#1f1f1f; }
+th { background:#00ff7f; color:#111; }
+td,th { padding:6px; border-bottom:1px solid #333; }
+
+td.matricula {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:nowrap;
+}
+
+.attention {
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  50% { opacity:0; }
+}
+
+.statusBtn { border:none; padding:4px 14px; border-radius:6px; font-weight:bold; cursor:pointer; }
+
+.deleteBtn {
+  background:none;
+  border:none;
+  font-size:18px;
+  cursor:pointer;
+  color:#ff5555;
+}
+
+.modal-bg {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.75);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
+}
+
+.modal {
+  background:#222;
+  padding:20px;
+  border-radius:8px;
+  text-align:center;
+}
 </style>
 </head>
 
 <body>
 
 <header>
+  <img src="logo.png">
   <h1>Relatório de Empréstimos</h1>
   <button onclick="location.href='index.html'">🏠 Voltar</button>
 </header>
 
 <main>
-<div class="table-wrap">
-  <div id="controlsHolder"></div>
+  <aside id="estoque">
+    <h2>📦 Estoque</h2>
+    <div id="estoqueConteudo">Carregando...</div>
+  </aside>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Nome</th>
-        <th>Matrícula</th>
-        <th>Tipo</th>
-        <th>Cartão</th>
-        <th>Motivo</th>
-        <th>Retirada</th>
-        <th>Prazo</th>
-        <th>Status</th>
-        <th>Excluir</th>
-      </tr>
-    </thead>
-    <tbody id="relatorioBody"></tbody>
-  </table>
-</div>
+  <div style="flex:1">
+    <div id="controlsHolder"></div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Matrícula</th>
+          <th>Tipo</th>
+          <th>Digicon</th>
+          <th>Prodata</th>
+          <th>Meia</th>
+          <th>Status</th>
+          <th>Excluir</th>
+        </tr>
+      </thead>
+      <tbody id="relatorioBody"></tbody>
+    </table>
+  </div>
 </main>
 
 <script src="firebaseConfig.js"></script>
@@ -71,103 +134,88 @@ tr:hover{background:#333}
 <script>
 let isAdmin = false;
 
-/* ===== AUTH ===== */
-auth.onAuthStateChanged(user=>{
-  isAdmin = !!user && user.uid === 'ID_DO_ADMIN';
+/* 🔐 Auth SEM variável auth */
+firebase.auth().onAuthStateChanged(user=>{
+  isAdmin = !!user && user.uid === "ID_DO_ADMIN";
   carregarRelatorio();
 });
 
-/* ===== CONTROLES ===== */
+/* ========= CONTROLES ========= */
 function criarControles(){
-  const c=document.createElement('div');
-  c.className='controls-bar';
+  const div=document.createElement("div");
+  div.className="controls-bar";
 
-  // STATUS
-  ['em aberto','resolvido'].forEach(st=>{
-    const b=document.createElement('button');
-    b.className='filterStatusBtn';
-    b.dataset.status=st;
-    b.dataset.active='true';
-    b.textContent=st;
-    b.onclick=()=>{
-      b.dataset.active=b.dataset.active==='true'?'false':'true';
-      b.classList.toggle('inactive',b.dataset.active==='false');
-      carregarRelatorio();
-    };
-    c.appendChild(b);
-  });
+  const statusSel=document.createElement("select");
+  statusSel.id="statusFilter";
+  statusSel.innerHTML=`
+    <option value="todos">Todos</option>
+    <option value="em aberto">Em aberto</option>
+    <option value="resolvido">Resolvido</option>
+  `;
 
-  document.getElementById('controlsHolder').appendChild(c);
+  statusSel.onchange=carregarRelatorio;
+  div.appendChild(statusSel);
+
+  document.getElementById("controlsHolder").appendChild(div);
 }
 
-/* ===== RELATÓRIO ===== */
+/* ========= RELATÓRIO ========= */
 async function carregarRelatorio(){
-  const tbody=document.getElementById('relatorioBody');
-  tbody.innerHTML='';
+  const tbody=document.getElementById("relatorioBody");
+  tbody.innerHTML="";
 
-  const activeStatus=[...document.querySelectorAll('.filterStatusBtn')]
-    .filter(b=>b.dataset.active==='true')
-    .map(b=>b.dataset.status);
+  const statusFiltro=document.getElementById("statusFilter")?.value;
 
-  const snap=await db.collection('emprestimos').orderBy('timestamp','desc').get();
+  const snap=await db.collection("emprestimos").get();
 
   snap.forEach(doc=>{
     const d=doc.data();
-    if(!activeStatus.includes(d.status)) return;
+    if(statusFiltro!=="todos" && d.status!==statusFiltro) return;
 
-    const tr=document.createElement('tr');
+    const tr=document.createElement("tr");
     tr.innerHTML=`
-      <td>${d.nomeMotorista||''}</td>
-      <td>${d.matriculaMotorista||''}</td>
-      <td>${d.tipoCartao||''}</td>
-      <td>${d.numeroCartao||'-'}</td>
-      <td>${d.motivo||''}</td>
-      <td>${d.dataRetirada||''}</td>
-      <td>${d.prazoDevolucao||''}</td>
-      <td>
-        <button class="statusBtn" style="background:${d.status==='em aberto'?'#ff5555':'#55ff55'}">
-          ${d.status}
-        </button>
-      </td>
-      <td>${isAdmin?'<button class="deleteBtn">🗑️</button>':''}</td>
+      <td>${d.nomeMotorista||""}</td>
+      <td class="matricula">${d.matricula||""}${d.status==="em aberto"?"<span class='attention'>⚠️</span>":""}</td>
+      <td>${d.tipoCartao||""}</td>
+      <td>${d.numBordoDigicon||"-"}</td>
+      <td>${d.numBordoProdata||"-"}</td>
+      <td>${d.numMeiaViagem||"-"}</td>
+      <td><button class="statusBtn" style="background:${d.status==="em aberto"?"#ff5555":"#55ff55"}">${d.status}</button></td>
+      <td>${isAdmin?'<button class="deleteBtn">🗑️</button>':""}</td>
     `;
+
     tbody.appendChild(tr);
 
-    tr.querySelector('.statusBtn').onclick=async()=>{
-      const novo=d.status==='em aberto'?'resolvido':'em aberto';
-      await db.collection('emprestimos').doc(doc.id).update({status:novo});
-      carregarRelatorio();
-    };
-
     if(isAdmin){
-      tr.querySelector('.deleteBtn').onclick=()=>confirmDelete(doc.id,tr);
+      tr.querySelector(".deleteBtn").onclick=()=>confirmDelete(doc.id,tr);
     }
   });
 }
 
-/* ===== MODAL DELETE ===== */
+/* ========= MODAL ========= */
 function confirmDelete(id,tr){
-  const bg=document.createElement('div');
-  bg.className='modal-bg';
-  const m=document.createElement('div');
-  m.className='modal';
-  m.innerHTML=`<p>Excluir este empréstimo?</p><button id="sim">Sim (5)</button><button id="nao">Não</button>`;
+  const bg=document.createElement("div");
+  bg.className="modal-bg";
+  const m=document.createElement("div");
+  m.className="modal";
+  m.innerHTML=`<p>Excluir empréstimo?</p><button id="sim">Sim (5)</button><button id="nao">Não</button>`;
   bg.appendChild(m);
   document.body.appendChild(bg);
 
   let t=5;
+  const btn=m.querySelector("#sim");
   const i=setInterval(()=>{
     t--;
-    m.querySelector('#sim').textContent=`Sim (${t})`;
-    if(t<=0){clearInterval(i);excluir(id,tr,bg);}
+    btn.textContent=`Sim (${t})`;
+    if(t<=0){ clearInterval(i); excluir(id,tr,bg); }
   },1000);
 
-  m.querySelector('#sim').onclick=()=>{clearInterval(i);excluir(id,tr,bg);}
-  m.querySelector('#nao').onclick=()=>{clearInterval(i);bg.remove();}
+  btn.onclick=()=>{ clearInterval(i); excluir(id,tr,bg); };
+  m.querySelector("#nao").onclick=()=>{ clearInterval(i); bg.remove(); };
 }
 
 async function excluir(id,tr,bg){
-  await db.collection('emprestimos').doc(id).delete();
+  await db.collection("emprestimos").doc(id).delete();
   tr.remove();
   bg.remove();
 }
