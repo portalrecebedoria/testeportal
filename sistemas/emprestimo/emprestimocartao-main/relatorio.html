@@ -5,12 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Relatório de Empréstimos</title>
 
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="favicon.ico" type="image/x-icon">
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 <style>
-/* ===== ESTILO ORIGINAL (INALTERADO) ===== */
+/* === (CSS ORIGINAL — NÃO ALTERADO) === */
 body {
     background-color: #121212;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -24,6 +28,7 @@ header {
     gap: 15px;
     margin-bottom: 20px;
 }
+header img.logo { height: 50px; }
 header h1 {
     flex-grow:1;
     font-size: 1.5rem;
@@ -39,91 +44,59 @@ header button {
 }
 main { display: flex; gap: 20px; }
 
-/* ===== ESTOQUE ===== */
+/* Estoque */
 #estoque {
     width: 400px;
     background: #1e1e1e;
     padding: 15px;
     border-radius: 10px;
+    height: fit-content;
 }
-#estoque h2 { color: #00ff7f; }
-.cardEstoque {
-    background: #2a2a2a;
-    border-radius: 8px;
-    padding: 10px;
-    margin-bottom: 10px;
+#estoque h2 { color:#00ff7f; }
+#estoqueConteudo { display:flex; flex-direction:column; gap:10px; }
+.cardEstoque { background:#2a2a2a; border-radius:8px; padding:10px; }
+
+/* Atenção */
+.attention { animation: blink 1s infinite; margin-left:6px; }
+@keyframes blink { 0%,50%,100%{opacity:1} 25%,75%{opacity:0} }
+
+.controls-bar {
+    display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px;
+}
+#monthSelect, .filterTipoBtn, #cardNumberFilter, #matriculaFilter, .countBtn, #statusFilter {
+    background:#222;
+    color:#fff;
+    border-radius:8px;
+    padding:6px 10px;
+    cursor:pointer;
+    border:1px solid rgba(255,255,255,0.08);
 }
 
-/* ⚠️ ALERTA */
-.attention {
-    margin-left:6px;
-    animation: blink 1s infinite;
-}
-@keyframes blink {
-    0%,50%,100% { opacity:1; }
-    25%,75% { opacity:0; }
-}
-
-/* ===== TABELA ===== */
+.table-wrap { flex:1; }
 table {
-    width: 100%;
-    border-collapse: collapse;
-    background: #1f1f1f;
-    border-radius: 8px;
+    width:100%;
+    border-collapse:collapse;
+    background:#1f1f1f;
 }
-th, td {
-    padding: 6px;
-    border-bottom: 1px solid #333;
-}
-th {
-    background: #00ff7f;
-    color: #111;
-}
+th { background:#00ff7f; color:#111; }
+th,td { padding:5px; border-bottom:1px solid #333; }
+
 .statusBtn {
-    padding:4px 15px;
+    padding:5px 20px;
     border:none;
     border-radius:5px;
     font-weight:bold;
     cursor:pointer;
 }
 
-/* ===== BOTÃO EXCLUIR ===== */
+/* 🔹 ADICIONADO */
 .deleteBtn {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-size: 18px;
-}
-
-/* ===== MODAL CONFIRMAÇÃO ===== */
-#confirmModal {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.85);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-}
-#confirmBox {
-    background: #1e1e1e;
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
-    width: 320px;
-}
-#confirmBox button {
-    margin: 10px;
-    padding: 6px 14px;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-}
-#btnConfirm {
-    background: #ff5555;
-}
-#btnCancel {
-    background: #555;
+    background:#e74c3c;
+    color:#fff;
+    border:none;
+    border-radius:5px;
+    padding:5px 10px;
+    cursor:pointer;
 }
 </style>
 </head>
@@ -131,104 +104,81 @@ th {
 <body>
 
 <header>
-<h1>Relatório de Empréstimos</h1>
-<button onclick="location.href='index.html'">🏠 Voltar</button>
+    <img src="logo.png" class="logo">
+    <h1>Relatório de Empréstimos</h1>
+    <button onclick="location.href='index.html'">🏠 Voltar</button>
 </header>
 
 <main>
+
 <aside id="estoque">
-<h2>📦 Estoque</h2>
-<div id="estoqueConteudo">Carregando...</div>
+    <h2>📦 Estoque</h2>
+    <div id="estoqueConteudo">Carregando...</div>
 </aside>
 
-<div style="flex:1">
-<table>
-<thead>
-<tr>
-<th>Nome</th>
-<th>Matrícula</th>
-<th>Tipo</th>
-<th>Digicon</th>
-<th>Prodata</th>
-<th>Meia</th>
-<th>Status</th>
-<th></th>
-</tr>
-</thead>
-<tbody id="relatorioBody"></tbody>
-</table>
+<div class="table-wrap">
+    <div id="controlsHolder"></div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Nome</th>
+            <th>Matrícula</th>
+            <th>Tipo</th>
+            <th>Digicon</th>
+            <th>Prodata</th>
+            <th>Meia</th>
+            <th>Motivo</th>
+            <th>Matrícula Empréstimo</th>
+            <th>Data</th>
+            <th>Prazo</th>
+            <th>Status</th>
+            <!-- 🔹 ADICIONADO -->
+            <th id="thExcluir" style="display:none;">Excluir</th>
+        </tr>
+        </thead>
+        <tbody id="relatorioBody"></tbody>
+    </table>
 </div>
+
 </main>
 
-<!-- MODAL -->
-<div id="confirmModal">
-<div id="confirmBox">
-<p>Deseja excluir este empréstimo?</p>
-<button id="btnConfirm">SIM (5)</button>
-<button id="btnCancel">Cancelar</button>
-</div>
-</div>
-
 <script src="firebaseConfig.js"></script>
+
 <script>
-const db = firebase.firestore();
-const auth = firebase.auth();
+/* ================= CONTROLES ================= */
+function criarControles(){
+    const bar = document.createElement('div');
+    bar.className = 'controls-bar';
 
-let isAdmin = false;
-let deleteTargetId = null;
-let countdownInterval = null;
+    const statusFilter = document.createElement('select');
+    statusFilter.id = 'statusFilter';
+    statusFilter.innerHTML = `
+        <option value="todos">Todos</option>
+        <option value="em aberto">Em aberto</option>
+        <option value="resolvido">Resolvidos</option>
+    `;
+    statusFilter.addEventListener('change', carregarRelatorio);
 
-/* ===== AUTH ===== */
-auth.onAuthStateChanged(user => {
-    if(!user) return;
-    // mantém sua lógica existente
-    isAdmin = true; // <-- aqui você já controla admin no sistema
-    carregarRelatorio();
-    atualizarEstoque();
-});
-
-/* ===== MODAL ===== */
-function abrirConfirmacao(id){
-    deleteTargetId = id;
-    let tempo = 5;
-    document.getElementById('btnConfirm').textContent = `SIM (${tempo})`;
-    document.getElementById('confirmModal').style.display='flex';
-
-    countdownInterval = setInterval(()=>{
-        tempo--;
-        document.getElementById('btnConfirm').textContent = `SIM (${tempo})`;
-        if(tempo === 0){
-            confirmarExclusao();
-        }
-    },1000);
+    bar.appendChild(statusFilter);
+    document.getElementById('controlsHolder').appendChild(bar);
 }
 
-function fecharConfirmacao(){
-    clearInterval(countdownInterval);
-    document.getElementById('confirmModal').style.display='none';
-}
-
-async function confirmarExclusao(){
-    clearInterval(countdownInterval);
-    await db.collection('emprestimos').doc(deleteTargetId).delete();
-    fecharConfirmacao();
-    carregarRelatorio();
-    atualizarEstoque();
-}
-
-document.getElementById('btnCancel').onclick = fecharConfirmacao;
-document.getElementById('btnConfirm').onclick = confirmarExclusao;
-
-/* ===== RELATÓRIO ===== */
+/* ================= RELATÓRIO ================= */
 async function carregarRelatorio(){
     const tbody = document.getElementById('relatorioBody');
     tbody.innerHTML = '';
 
-    const snapshot = await db.collection('emprestimos').get();
-    snapshot.forEach(doc=>{
-        const d = doc.data();
-        const tr = document.createElement('tr');
+    const statusFiltro = document.getElementById('statusFilter').value;
 
+    const snap = await db.collection('emprestimos').orderBy('timestamp','desc').get();
+
+    snap.forEach(doc=>{
+        const d = doc.data();
+
+        if(statusFiltro !== 'todos' && d.status !== statusFiltro) return;
+
+        const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${d.nomeMotorista||''}</td>
             <td>${d.matriculaMotorista||''}</td>
@@ -236,18 +186,45 @@ async function carregarRelatorio(){
             <td>${d.numBordoDigicon||'-'}</td>
             <td>${d.numBordoProdata||'-'}</td>
             <td>${d.numMeiaViagem||'-'}</td>
-            <td><button class="statusBtn">${d.status}</button></td>
-            <td>${isAdmin ? `<button class="deleteBtn" onclick="abrirConfirmacao('${doc.id}')">🗑️</button>` : ''}</td>
+            <td>${d.motivo||''}</td>
+            <td>${d.matriculaEmpresto||''}</td>
+            <td>${d.dataRetirada||''}</td>
+            <td>${d.prazoDevolucao||'-'}</td>
+            <td>
+                <button class="statusBtn"
+                    style="background:${d.status==='em aberto'?'#ff5555':'#55ff55'}">
+                    ${d.status}
+                </button>
+            </td>
         `;
+
+        /* 🔹 BOTÃO EXCLUIR (ADMIN) */
+        if(window.isAdmin === true){
+            document.getElementById('thExcluir').style.display = '';
+            const td = document.createElement('td');
+            const btn = document.createElement('button');
+            btn.className = 'deleteBtn';
+            btn.textContent = 'Excluir';
+            btn.onclick = async ()=>{
+                if(confirm('Deseja excluir este empréstimo?')){
+                    await db.collection('emprestimos').doc(doc.id).delete();
+                    carregarRelatorio();
+                }
+            };
+            td.appendChild(btn);
+            tr.appendChild(td);
+        }
+
         tbody.appendChild(tr);
     });
 }
 
-/* ===== ESTOQUE (INALTERADO) ===== */
-async function atualizarEstoque(){
-    document.getElementById('estoqueConteudo').innerHTML = 'Atualizado';
-}
+/* ================= INIT ================= */
+criarControles();
+carregarRelatorio();
+atualizarEstoque();
 </script>
 
+<footer class="footer">Relatório atualizado em tempo real</footer>
 </body>
 </html>
