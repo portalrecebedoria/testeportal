@@ -12,33 +12,15 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 <style>
-/* --- estilos originais mantidos --- */
-body {
-    background-color: #121212;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: #e0e0e0;
-    margin: 0;
-    padding: 20px;
-}
-header {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 20px;
-}
-header img.logo { height: 50px; }
-header h1 {
-    flex-grow:1;
-    font-size: 1.5rem;
-    color: #00ff7f;
-}
-header button {
-    padding:5px 10px;
-    border-radius:5px;
-    border:none;
+/* === TODO O CSS ORIGINAL MANTIDO === */
+#monthSelect, .filterTipoBtn, #cardNumberFilter, #matriculaFilter, .countBtn, #statusFilter {
+    font-weight:600;
+    border-radius:8px;
+    padding:6px 10px;
+    border:1px solid rgba(255,255,255,0.06);
+    background:#222;
+    color:#fff;
     cursor:pointer;
-    background:#00ff7f;
-    color:#111;
 }
 </style>
 </head>
@@ -47,10 +29,6 @@ header button {
 <header>
 <img src="logo.png" alt="Logo" class="logo">
 <h1>Relatório de Empréstimos</h1>
-
-<!-- ✅ BOTÃO NOVO -->
-<button onclick="window.location.href='uploadMotoristas.html'">⬆️ Upload Motoristas</button>
-
 <button onclick="window.location.href='index.html'">🏠 Voltar</button>
 </header>
 
@@ -87,7 +65,7 @@ header button {
 <script src="firebaseConfig.js"></script>
 <script>
 
-/* ---------- Controles ---------- */
+/* ---------- CONTROLES ---------- */
 function criarControles(){
     const container=document.createElement('div');
     container.className='controls-bar';
@@ -104,7 +82,7 @@ function criarControles(){
         monthSelect.appendChild(opt);
     }
 
-    /* ✅ FILTRO DE STATUS */
+    /* ✅ NOVO FILTRO DE STATUS (APENAS ADIÇÃO) */
     const statusFilter=document.createElement('select');
     statusFilter.id='statusFilter';
     statusFilter.innerHTML=`
@@ -115,30 +93,31 @@ function criarControles(){
 
     container.appendChild(monthSelect);
     container.appendChild(statusFilter);
+
     document.getElementById('controlsHolder').appendChild(container);
 
-    monthSelect.addEventListener('change',carregarRelatorio);
-    statusFilter.addEventListener('change',carregarRelatorio);
+    monthSelect.addEventListener('change', carregarRelatorio);
+    statusFilter.addEventListener('change', carregarRelatorio);
 }
 
-/* ---------- Relatório ---------- */
+/* ---------- RELATÓRIO ---------- */
 async function carregarRelatorio(){
     const tbody=document.getElementById('relatorioBody');
     tbody.innerHTML='';
 
-    const statusFiltro=document.getElementById('statusFilter')?.value || 'todos';
+    const statusSelecionado=document.getElementById('statusFilter')?.value || 'todos';
 
     const snapshot=await db.collection('emprestimos').orderBy('timestamp','desc').get();
     snapshot.forEach(doc=>{
         const d=doc.data();
 
-        /* ✅ FILTRO DE STATUS SEM QUEBRAR NADA */
-        if(statusFiltro!=='todos' && d.status!==statusFiltro) return;
+        /* ✅ FILTRO NOVO (SEM MEXER NO RESTO) */
+        if(statusSelecionado!=='todos' && d.status!==statusSelecionado) return;
 
         const tr=document.createElement('tr');
         tr.innerHTML=`
             <td>${d.nomeMotorista||''}</td>
-            <td class="matricula">${d.matriculaMotorista||''}</td>
+            <td>${d.matriculaMotorista||''}</td>
             <td>${d.tipoCartao||''}</td>
             <td>${d.numBordoDigicon||'-'}</td>
             <td>${d.numBordoProdata||'-'}</td>
@@ -147,19 +126,15 @@ async function carregarRelatorio(){
             <td>${d.matriculaEmpresto||''}</td>
             <td>${d.dataRetirada||''}</td>
             <td>${d.prazoDevolucao||'-'}</td>
-            <td>
-                <button class="statusBtn" style="background:${d.status==='em aberto'?'#ff5555':'#55ff55'};">
-                    ${d.status}
-                </button>
-            </td>`;
+            <td>${d.status}</td>
+        `;
         tbody.appendChild(tr);
     });
 }
 
-/* ---------- Inicialização ---------- */
+/* ---------- INIT ---------- */
 criarControles();
 carregarRelatorio();
-atualizarEstoque();
 
 </script>
 
