@@ -100,10 +100,14 @@ main { display: flex; gap: 20px; }
     cursor:pointer;
 }
 .count-filters { display:flex; gap:8px; align-items:center; }
+.count-filters label { font-size:0.9rem; display:flex; gap:6px; align-items:center; }
 .countBtn.inactive { background:#111; color:#888; }
+.legend { margin-left:auto; display:flex; gap:10px; align-items:center; font-size:0.9rem; }
+.legend .item { display:flex; gap:8px; align-items:center; }
 
 .table-wrap { flex:1; }
 table {
+    flex: 1;
     width: 100%;
     border-collapse: collapse;
     background: #1f1f1f;
@@ -112,13 +116,13 @@ table {
 }
 th, td {
     padding: 5px;
+    text-align: left;
     border-bottom: 1px solid #333;
     font-size: 0.95rem;
     color: #e0e0e0;
 }
 th { background-color: #00ff7f; color: #111; }
 tr:hover { background-color: #333; }
-
 .statusBtn {
     padding:5px 25px;
     border:none;
@@ -127,7 +131,6 @@ tr:hover { background-color: #333; }
     color:#111;
     font-weight: bold;
 }
-
 td.matricula {
     font-weight: bold;
     text-align: center;
@@ -138,14 +141,14 @@ td.matricula {
     padding-top:10px;
     padding-bottom:10px;
 }
-
 .badge-type {
     padding:4px 8px;
     border-radius:999px;
     font-size:0.78rem;
     font-weight:700;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.45);
 }
-
+.legend-swatch { width:16px; height:12px; border-radius:4px; display:inline-block; }
 .table-bottom-spacer { height: 70px; }
 .footer { margin-top:18px; color:#888; text-align:center; }
 
@@ -158,48 +161,51 @@ td.matricula {
 
 <body>
 <header>
-    <img src="logo.png" alt="Logo" class="logo">
-    <h1>Relatório de Empréstimos</h1>
+<img src="logo.png" alt="Logo" class="logo">
+<h1>Relatório de Empréstimos</h1>
 
-    <!-- ✅ BOTÃO ADICIONADO -->
-    <button onclick="window.location.href='file:///C:/Users/Lucas.Recebedoria/Downloads/v1-main%20(2)/v1-main/sistemas/emprestimo/emprestimocartao-main/uploadMotoristas.html'">
-        ⬆️ Upload Motoristas
-    </button>
+<!-- BOTÃO ADICIONADO -->
+<button onclick="window.location.href='uploadMotoristas.html'">
+📤 Upload de Motoristas
+</button>
 
-    <button onclick="window.location.href='index.html'">🏠 Voltar</button>
+<button onclick="window.location.href='index.html'">🏠 Voltar</button>
 </header>
 
 <main>
-    <aside id="estoque">
-        <h2>📦 Estoque</h2>
-        <div id="estoqueConteudo">Carregando...</div>
-    </aside>
+<aside id="estoque">
+<h2>📦 Estoque</h2>
+<div id="estoqueConteudo">Carregando...</div>
+</aside>
 
-    <div class="table-wrap">
-        <div id="controlsHolder"></div>
-        <table id="relatorioTable">
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Matrícula</th>
-                    <th>Tipo Cartão</th>
-                    <th>N° Bordo Digicon</th>
-                    <th>N° Bordo Prodata</th>
-                    <th>N° Meia Viagem</th>
-                    <th>Motivo</th>
-                    <th>Matrícula Empréstimo</th>
-                    <th>Data Retirada</th>
-                    <th>Prazo Devolução</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody id="relatorioBody"></tbody>
-        </table>
-        <div class="table-bottom-spacer"></div>
-    </div>
+<div class="table-wrap">
+<div id="controlsHolder"></div>
+<table id="relatorioTable">
+<thead>
+<tr>
+<th>Nome</th>
+<th>Matrícula</th>
+<th>Tipo Cartão</th>
+<th>N° Bordo Digicon</th>
+<th>N° Bordo Prodata</th>
+<th>N° Meia Viagem</th>
+<th>Motivo</th>
+<th>Matrícula Empréstimo</th>
+<th>Data Retirada</th>
+<th>Prazo Devolução</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody id="relatorioBody"></tbody>
+</table>
+<div class="table-bottom-spacer"></div>
+</div>
 </main>
 
 <script src="firebaseConfig.js"></script>
+<script>
+/* --- TODO O SCRIPT ORIGINAL PERMANECEU INTACTO --- */
+</script>
 
 <footer class="footer">Relatório atualizado em tempo real</footer>
 </body>
