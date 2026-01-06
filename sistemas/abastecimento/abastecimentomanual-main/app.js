@@ -61,7 +61,7 @@ if (!dataCaixa) {
 const updateValor = () => {
   if (!qtdBordos || !valor) return;
   const q = Number(qtdBordos.value || 0);
-  valor.value = (q * 5).toFixed(2);
+  valor.value = (q * 5,30).toFixed(2);
 };
 if (qtdBordos) qtdBordos.addEventListener('input', updateValor);
 
