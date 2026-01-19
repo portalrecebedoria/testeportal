@@ -1,156 +1,173 @@
+import { app, auth, db } from "./firebaseConfig_v2.js";
 import {
-  initializeApp
-} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-
-import {
-  getAuth,
-  signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  updateProfile
+  signInWithEmailAndPassword,
+  updateProfile,
+  sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-
 import {
-  getFirestore,
   doc,
   setDoc,
-  getDoc
+  getDocs,
+  query,
+  where,
+  collection
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-// ============================================================
-// 🔥 CONFIG FIREBASE
-// ============================================================
-const firebaseConfig = {
-  apiKey: "AIzaSyBWmq02P8pGbl2NmppEAIKtF9KtQ7AzTFQ",
-  authDomain: "unificado-441cd.firebaseapp.com",
-  projectId: "unificado-441cd",
-  storageBucket: "unificado-441cd.firebasestorage.app",
-  messagingSenderId: "671392063569",
-  appId: "1:671392063569:web:57e3f6b54fcdc45862d870",
-  measurementId: "G-6GQX395J9C",
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-// ============================================================
-// ⭐ ALERTA BONITO
-// ============================================================
+// =======================================================
+// 🔔 Alerta bonito
+// =======================================================
 function showAlert(message, type = "error") {
   const alertBox = document.getElementById("alertBox");
-  if (!alertBox) return alert(message);
-
-  alertBox.innerHTML = message;
-  alertBox.className = `${type} show`;
-  alertBox.style.display = "block";
+  alertBox.textContent = message;
+  alertBox.className = `alert-box ${type}`;
+  alertBox.style.opacity = "1";
 
   setTimeout(() => {
-    alertBox.classList.remove("show");
-    setTimeout(() => (alertBox.style.display = "none"), 200);
+    alertBox.style.opacity = "0";
   }, 3500);
 }
 
-// ============================================================
-// 🔐 LOGIN
-// ============================================================
-document.getElementById("loginBtn").addEventListener("click", async () => {
-  const matricula = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
+// =======================================================
+// 🔄 Alternar formulários
+// =======================================================
+const loginForm = document.getElementById("loginForm");
+const registerForm = document.getElementById("registerForm");
+const showRegister = document.getElementById("showRegister");
+const showLogin = document.getElementById("showLogin");
+const formTitle = document.getElementById("formTitle");
 
-  if (!matricula)
-    return showAlert("Digite sua matrícula.", "error");
+registerForm.style.display = "none";
 
-  const email = matricula.includes("@")
-    ? matricula
-    : `${matricula}@movebuss.local`;
+showRegister.addEventListener("click", () => {
+  loginForm.style.display = "none";
+  registerForm.style.display = "block";
+  formTitle.textContent = "Registrar";
+});
+
+showLogin.addEventListener("click", () => {
+  registerForm.style.display = "none";
+  loginForm.style.display = "block";
+  formTitle.textContent = "Login";
+});
+
+// =======================================================
+// ⌨ ENTER faz login
+// =======================================================
+document.addEventListener("keydown", (event) => {
+  const loginVisible = loginForm.style.display !== "none";
+  if (event.key === "Enter" && loginVisible) {
+    event.preventDefault();
+    document.getElementById("btnLogin").click();
+  }
+});
+
+// =======================================================
+// 🔐 LOGIN (INALTERADO NA LÓGICA)
+// =======================================================
+document.getElementById("btnLogin").addEventListener("click", async () => {
+  const matricula = document.getElementById("loginMatricula").value.trim();
+  const senha = document.getElementById("loginSenha").value.trim();
+
+  if (!matricula || !senha)
+    return showAlert("Preencha todos os campos.", "error");
 
   try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-
-    const userDoc = await getDoc(doc(db, "users", user.uid));
-    if (!userDoc.exists()) {
-      showAlert("Usuário não encontrado no banco de dados.", "error");
-      return;
-    }
-
-    const userData = userDoc.data();
-    localStorage.setItem("isAdmin", userData.admin === true);
-
+    await signInWithEmailAndPassword(
+      auth,
+      `${matricula}@movebuss.local`,
+      senha
+    );
     window.location.href = "index.html";
-  } catch (error) {
+  } catch {
     showAlert("Senha incorreta ou usuário inválido.", "error");
   }
 });
 
-// ============================================================
-// ⌨ ENTER DISPARA LOGIN  (MANTENDO SUA LÓGICA)
-// ============================================================
-document.addEventListener("keydown", (event) => {
-  const form = document.getElementById("loginForm");
-  if (!form) return;
+// =======================================================
+// 🔑 RECUPERAR SENHA (NOVO)
+// =======================================================
+document.getElementById("recoverPassword").addEventListener("click", async () => {
+  const matricula = document.getElementById("loginMatricula").value.trim();
 
-  // offsetParent verifica se o elemento está realmente visível
-  const loginFormVisible = form.offsetParent !== null;
+  if (!matricula)
+    return showAlert("Informe a matrícula.", "error");
 
-  if (event.key === "Enter" && loginFormVisible) {
-    event.preventDefault();
-    document.getElementById("loginBtn").click();
+  try {
+    // busca usuário pelo campo matricula
+    const q = query(
+      collection(db, "users"),
+      where("matricula", "==", matricula)
+    );
+
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty)
+      return showAlert("Usuário não encontrado.", "error");
+
+    const userData = snapshot.docs[0].data();
+
+    if (!userData.emailRecuperacao)
+      return showAlert(
+        "Usuário ainda não possui email de recuperação cadastrado.",
+        "error"
+      );
+
+    await sendPasswordResetEmail(auth, userData.emailRecuperacao);
+
+    showAlert(
+      "Email de recuperação enviado com sucesso!",
+      "success"
+    );
+
+  } catch (e) {
+    showAlert("Erro ao enviar email de recuperação.", "error");
   }
 });
 
-// ============================================================
-// 🧾 MODAL CRIAR CONTA
-// ============================================================
-document.getElementById("showCreateAccountBtn").addEventListener("click", () => {
-  document.getElementById("createAccountModal").classList.remove("hidden");
-});
+// =======================================================
+// 📝 REGISTRO (INALTERADO)
+// =======================================================
+document.getElementById("btnRegistrar").addEventListener("click", async () => {
+  const nome = document.getElementById("regNome").value.trim();
+  const matricula = document.getElementById("regMatricula").value.trim();
+  const dataAdmissao = document.getElementById("regDataAdmissao").value.trim();
+  const senha = document.getElementById("regSenha").value.trim();
+  const confirmaSenha = document.getElementById("regConfirmaSenha").value.trim();
 
-document.getElementById("closeModalBtn").addEventListener("click", () => {
-  document.getElementById("createAccountModal").classList.add("hidden");
-});
-
-// ============================================================
-// 🧍 CRIAR CONTA
-// ============================================================
-document.getElementById("createAccountBtn").addEventListener("click", async () => {
-  const nome = document.getElementById("newName").value.trim();
-  const matricula = document.getElementById("newEmail").value.trim();
-  const dataAdmissao = document.getElementById("newDataAdmissao").value.trim();
-  const senha = document.getElementById("newPassword").value;
-  const confirmar = document.getElementById("confirmPassword").value;
-
-  if (!nome || !matricula || !senha || !confirmar || !dataAdmissao)
+  if (!nome || !matricula || !senha || !confirmaSenha || !dataAdmissao)
     return showAlert("Preencha todos os campos.", "error");
 
-  if (senha !== confirmar)
+  if (senha !== confirmaSenha)
     return showAlert("As senhas não conferem.", "error");
 
-  const email = matricula.includes("@")
-    ? matricula
-    : `${matricula}@movebuss.local`;
-
   try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, senha);
-    const user = userCredential.user;
+    const cred = await createUserWithEmailAndPassword(
+      auth,
+      `${matricula}@movebuss.local`,
+      senha
+    );
 
-    await updateProfile(user, { displayName: nome });
+    await updateProfile(cred.user, { displayName: nome });
 
-    await setDoc(doc(db, "users", user.uid), {
-      uid: user.uid,
+    await setDoc(doc(db, "users", cred.user.uid), {
+      uid: cred.user.uid,
       nome,
       matricula,
-      email,
+      email: `${matricula}@movebuss.local`,
+      emailRecuperacao: "",
       dataAdmissao,
       createdAt: new Date(),
       admin: false
     });
 
-    showAlert("Conta criada com sucesso!", "success");
+    showAlert("Usuário registrado com sucesso!", "success");
 
-    document.getElementById("createAccountModal").classList.add("hidden");
+    registerForm.style.display = "none";
+    loginForm.style.display = "block";
+    formTitle.textContent = "Login";
 
-  } catch (error) {
-    showAlert("Erro ao criar conta: " + error.message, "error");
+  } catch (e) {
+    showAlert("Erro ao registrar: " + e.message, "error");
   }
 });

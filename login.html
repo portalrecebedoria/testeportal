@@ -18,21 +18,28 @@
 
     <!-- Login -->
     <div id="loginForm">
-      <input type="text" id="loginMatricula" placeholder="🆔Matricula" required />
-      <input type="password" id="loginSenha" placeholder="🔐Senha" required />
+      <input type="text" id="loginMatricula" placeholder="🆔 Matrícula" required />
+      <input type="password" id="loginSenha" placeholder="🔐 Senha" required />
+
       <button id="btnLogin">Entrar</button>
+
+      <!-- 🔑 Recuperar senha -->
+      <div class="toggle-link" id="recoverPassword">
+        Esqueci minha senha
+      </div>
+
       <div class="toggle-link" id="showRegister">Criar uma conta</div>
     </div>
 
     <!-- Registro -->
     <div id="registerForm">
       <input type="text" id="regNome" placeholder="Nome completo" required />
-      <input type="text" id="regMatricula" placeholder="Matricula" required />
-      <input type="date" id="regDataAdmissao" placeholder="Data de Admissao" required />
+      <input type="text" id="regMatricula" placeholder="Matrícula" required />
+      <input type="date" id="regDataAdmissao" required />
       <input type="password" id="regSenha" placeholder="Senha" required />
       <input type="password" id="regConfirmaSenha" placeholder="Confirmar senha" required />
       <button id="btnRegistrar">Registrar</button>
-      <div class="toggle-link" id="showLogin">Ja tenho conta</div>
+      <div class="toggle-link" id="showLogin">Já tenho conta</div>
     </div>
   </div>
 
@@ -40,125 +47,7 @@
     Developed by Lucas L Custodio - Portal Recebedoria v1
   </footer>
 
-  <script type="module">
-    import { app, auth, db } from "./firebaseConfig_v2.js";
-    import {
-      createUserWithEmailAndPassword,
-      signInWithEmailAndPassword,
-      updateProfile
-    } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-    import {
-      doc,
-      setDoc
-    } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-
-    const loginForm = document.getElementById("loginForm");
-    const registerForm = document.getElementById("registerForm");
-    const showRegister = document.getElementById("showRegister");
-    const showLogin = document.getElementById("showLogin");
-    const formTitle = document.getElementById("formTitle");
-
-    registerForm.style.display = "none";
-
-    showRegister.addEventListener("click", () => {
-      loginForm.style.display = "none";
-      registerForm.style.display = "block";
-      formTitle.textContent = "Registrar";
-    });
-
-    showLogin.addEventListener("click", () => {
-      registerForm.style.display = "none";
-      loginForm.style.display = "block";
-      formTitle.textContent = "Login";
-    });
-
-    // =======================================================
-    // 🔔 Função de alerta bonito
-    // =======================================================
-    function showAlert(message, type = "error") {
-      const alertBox = document.getElementById("alertBox");
-      alertBox.textContent = message;
-
-      alertBox.className = `alert-box ${type}`;
-      alertBox.style.opacity = "1";
-
-      setTimeout(() => {
-        alertBox.style.opacity = "0";
-      }, 3500);
-    }
-
-    // =======================================================
-    // ⌨ ENTER faz login (ADICIONADO)
-    // =======================================================
-    document.addEventListener("keydown", (event) => {
-      const loginVisible = loginForm.style.display !== "none";
-
-      if (event.key === "Enter" && loginVisible) {
-        event.preventDefault();
-        document.getElementById("btnLogin").click();
-      }
-    });
-
-    // =======================================================
-    // 🔐 LOGIN
-    // =======================================================
-    document.getElementById("btnLogin").addEventListener("click", async () => {
-      const matricula = document.getElementById("loginMatricula").value.trim();
-      const senha = document.getElementById("loginSenha").value.trim();
-
-      if (!matricula || !senha)
-        return showAlert("Preencha todos os campos.", "error");
-
-      try {
-        await signInWithEmailAndPassword(auth, `${matricula}@movebuss.local`, senha);
-        window.location.href = "index.html";
-      } catch (e) {
-        showAlert("Senha incorreta ou usuario invalido.", "error");
-      }
-    });
-
-    // =======================================================
-    // 📝 REGISTRO
-    // =======================================================
-    document.getElementById("btnRegistrar").addEventListener("click", async () => {
-      const nome = document.getElementById("regNome").value.trim();
-      const matricula = document.getElementById("regMatricula").value.trim();
-      const dataAdmissao = document.getElementById("regDataAdmissao").value.trim();
-      const senha = document.getElementById("regSenha").value.trim();
-      const confirmaSenha = document.getElementById("regConfirmaSenha").value.trim();
-
-      if (!nome || !matricula || !senha || !confirmaSenha || !dataAdmissao)
-        return showAlert("Preencha todos os campos.", "error");
-
-      if (senha !== confirmaSenha)
-        return showAlert("As senhas nao conferem.", "error");
-
-      try {
-        const cred = await createUserWithEmailAndPassword(auth, `${matricula}@movebuss.local`, senha);
-
-        await updateProfile(cred.user, { displayName: nome });
-
-        await setDoc(doc(db, "users", cred.user.uid), {
-          uid: cred.user.uid,
-          nome,
-          matricula,
-          email: `${matricula}@movebuss.local`,
-          dataAdmissao,
-          createdAt: new Date(),
-          admin: false
-        });
-
-        showAlert("Usuario registrado com sucesso!", "success");
-
-        registerForm.style.display = "none";
-        loginForm.style.display = "block";
-        formTitle.textContent = "Login";
-
-      } catch (e) {
-        showAlert("Erro ao registrar: " + e.message, "error");
-      }
-    });
-  </script>
+  <script type="module" src="login.js"></script>
 
 </body>
 </html>
