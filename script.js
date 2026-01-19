@@ -3,6 +3,29 @@ import { auth, db } from "./firebaseConfig.js";
 import { onAuthStateChanged, signOut, updatePassword } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
+// ============================================================
+// ⭐ ALERTA GLOBAL (INDEX)  ← ÚNICA ADIÇÃO
+// ============================================================
+function showAlert(message, type = "error") {
+  const alertBox = document.getElementById("alertBox");
+
+  if (!alertBox) {
+    alert(message);
+    return;
+  }
+
+  alertBox.textContent = message;
+  alertBox.className = `alert ${type} show`;
+  alertBox.style.display = "block";
+
+  setTimeout(() => {
+    alertBox.classList.remove("show");
+    setTimeout(() => {
+      alertBox.style.display = "none";
+    }, 200);
+  }, 3500);
+}
+
 // 🔹 Elementos principais
 const sidebar = document.getElementById('sidebar');
 const logoutBtn = document.getElementById('logoutBtn');
